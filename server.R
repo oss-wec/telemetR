@@ -6,7 +6,7 @@ source("global.R")
 
 # ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
 # CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS 
-dat <- fread("data/collar_subset.csv")
+dat <- fread("data/WorkingExample.csv")
 dat_animal <- read.csv("data/collaredanimals2.csv")
 #dat_animal$Collar_Date <- as.Date(strptime(dat_animal$Collar_Date, format = "%m/%d/%Y"))
 
@@ -19,7 +19,12 @@ shinyServer(function(input, output) {
     datatable(df, rownames = FALSE,
               class = "cell-border stripe")
   })
-    
+  
+  # SUBSET GPS DATA BY SPECIES  
+  df_subset <- reactive({
+    df[species == input$species, ]
+  })
+  
 #   # TESTING DATE RANGE OUTPUT, THIS WAS A BITCH
 #   output$date.out <- renderPrint({
 #     t <- as.Date(input$fdate[1]) == dat_animal$Collar_Date[1]
@@ -44,8 +49,7 @@ shinyServer(function(input, output) {
   # AND LAST LOCATION ARE SHOWN, WITH A LINE BETWEEN THEM. FOR THE LINE BETWEEN THEM,
   # I MAY TRY TO USE EVERY 10 OR SO POINTS AS LINE TO GET A GENERAL OVERVIEW OF THE PATH.
   output$map <- renderLeaflet({
-    leaflet() %>% addProviderTiles("Esri.WorldTopoMap") %>% 
-      setView(lng = -117.12, lat = 38.62, zoom = 7)
+    CollarMap(df_subset())
   })
   
   output$dates.out <- renderPrint({

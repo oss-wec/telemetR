@@ -1,4 +1,5 @@
 library(data.table)
+library(leaflet)
 
 dat_animal <- fread("data/collared_animals.csv")
 dat_animal[Species == "DBHS"]
@@ -71,6 +72,67 @@ return(m)
 
 dat <- fread("data/AllCollars.csv")
 df <- dat[, .SD[seq(1, .N, 20)], by = ndowid]  #THIS IS THE DATA.TABLE WAY TO SUBSET EACH NDOWID 
-write.csv(df, "WorkingExample.csv")
+dat[, .SD[c(1, .N)]]
+write.csv(df, "WorkingExample2.csv")
 
 seq(1, 10, 4)
+
+##############################
+# WORKING EXAMPLE OF THE MAP #
+##############################
+
+CollarMap <- function(dataframe) {
+  df <- as.data.table(dataframe)
+  df <- df[complete.cases(df[, .(long_x, lat_y)])]
+  unq_id <- unique(df[, ndowid])
+  
+  map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
+  layer_group <- list()
+  
+  for (i in 1:(length(unq_id) - 1)) {
+    d <- df[ndowid == unq_id[i]]
+    print(i); print(unq_id[i])
+    map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
+                        weight = 2, color = "black", opacity = 1)
+    map <- addCircleMarkers(map, lng = d$long_x, lat = d$lat_y,
+                            stroke = FALSE, radius = 4, color = "navy",
+                            fillOpacity = 1, 
+                            group = paste(unq_id[i]))
+    layer_group <- c(layer_group, paste(unq_id[i]))
+  }
+  map <- addLayersControl(map, 
+                          overlayGroups = layer_group,
+                          options = layersControlOptions(collapsed = TRUE))
+  return(map)
+}
+
+dat <- fread("data/WorkingExample.csv")
+
+df_lines <- dat[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
+df_points <- df_lines[, .SD[c(1, .N)], by = ndowid]
+
+CollarMap <- function(dataframe) {
+  df <- as.data.table(dataframe)
+  df <- df[complete.cases(df[, .(long_x, lat_y)])]
+  df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
+  unq_id <- unique(df[, ndowid])
+  
+  map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
+  
+  for (i in 1:(length(unq_id) - 1)) {
+    d <- df_lines[ndowid == unq_id[i]]
+    dp <- d[, .SD[c(1, .N)]]
+    
+    map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
+                        weight = 2, color = "black", opacity = .4)
+    map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
+                            stroke = FALSE, radius = 4, color = "navy",
+                            fillOpacity = 1)
+  }
+  return(map)
+}
+CollarMap(dat)
+
+### NEW DATA INCLUDED SPECIES AND MANAGEMENT AREA
+
+dat <- fread("data/AllCollars (2).csv")
