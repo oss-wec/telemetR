@@ -11,11 +11,12 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                             ),
                      column(4,
                             selectInput("mgmtarea", "Management Area",
-                                           1:29)
+                                        choices = 1:29,
+                                        selected = 10
                             )
                      ),
             hr(),
-            DT::dataTableOutput("animal.table", width = "100%", height = "auto")),   
+            DT::dataTableOutput("animal.table", width = "100%", height = "auto"))),   
                    
    tabPanel("Map",
     div(class = "outer",
@@ -34,17 +35,16 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       checkboxInput("use.date", "Use Date Range", value = FALSE),
                       dateRangeInput("dates", "Date Range:",
                                      start = "2010-01-01",
-                                     min = "2010-01-01"),
-                      
-                      textOutput("id.out"),
-                      verbatimTextOutput(("dates.out"))
+                                     min = "2010-01-01")
                       )
     )
   ),
   
   tabPanel("Data",
            h2("All GPS Data"),
-           p("All GPS collar data for seleceted animals."),
+           p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),
+           downloadButton("downloadData", "Download Data"),
+           hr(),
            dataTableOutput("collar.table"))
   
 ))
