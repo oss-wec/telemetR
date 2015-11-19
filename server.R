@@ -6,8 +6,8 @@ source("global.R")
 
 # ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
 # CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS 
-dat <- fread("data/WorkingExample.csv")
-dat_animal <- read.csv("data/collaredanimals2.csv")
+dat <- fread("V:/ActiveProjects/WildlifeDiversity/Gritts_Mitch/WorkingExample2.csv")
+dat_animal <- read.csv("V:/ActiveProjects/WildlifeDiversity/Gritts_Mitch/collaredanimals2.csv")
 #dat_animal$Collar_Date <- as.Date(strptime(dat_animal$Collar_Date, format = "%m/%d/%Y"))
 
 shinyServer(function(input, output) {
@@ -21,8 +21,21 @@ shinyServer(function(input, output) {
   })
   
   # SUBSET GPS DATA BY SPECIES  
+  
+  id_list <- reactive({
+    id_list <- strsplit(input$ndowid, ", ")
+    id_list <- id_list[[1]]
+    id_list <- as.numeric(id_list)
+    return(id_list)
+  })
+  
   df_subset <- reactive({
-    df[species == input$species, ]
+    if (is.null(input$ndowid) | input$ndowid == "") {
+      dat[species == input$species, ]
+    } else {
+      dat[species == input$species &
+           ndowid %in% id_list(), ]
+    }
   })
   
 #   # TESTING DATE RANGE OUTPUT, THIS WAS A BITCH
@@ -45,16 +58,22 @@ shinyServer(function(input, output) {
 #               class = "cell-border stripe")
 #   })
   
-  # THE MAP INITITIALLY OPENS TO A SIMPLIFIED VERSION OF THE MAP; EACH ANIMALS FIRST
-  # AND LAST LOCATION ARE SHOWN, WITH A LINE BETWEEN THEM. FOR THE LINE BETWEEN THEM,
-  # I MAY TRY TO USE EVERY 10 OR SO POINTS AS LINE TO GET A GENERAL OVERVIEW OF THE PATH.
   output$map <- renderLeaflet({
     CollarMap(df_subset())
+  })
+  
+  output$id.out <- renderPrint({
+    print(id_list())
   })
   
   output$dates.out <- renderPrint({
     print(as.Date(input$dates[1]))
     print(class(input$dates[2]))
     })
+  
+  output$collar.table <- DT::renderDataTable({
+    datatable(df_subset(), rownames = FALSE,
+              class = "cell-border stripe")
+  })
 
 })

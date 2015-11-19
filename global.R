@@ -6,11 +6,10 @@ CollarMap <- function(dataframe) {
   df <- df[complete.cases(df[, .(long_x, lat_y)])]
   df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
   unq_id <- unique(df[, ndowid])
-  
   map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
   
-  for (i in 1:(length(unq_id) - 1)) {
-    d <- df_lines[ndowid == unq_id[i]]
+  for (n in unq_id) {
+    d <- df_lines[ndowid == n]
     dp <- d[, .SD[c(1, .N)]]
     
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,

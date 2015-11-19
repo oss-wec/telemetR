@@ -135,4 +135,30 @@ CollarMap(dat)
 
 ### NEW DATA INCLUDED SPECIES AND MANAGEMENT AREA
 
-dat <- fread("data/AllCollars (2).csv")
+df <- fread("data/WorkingExample2.csv")
+
+
+#######################################
+# USING TEXT INPUT TO GENERATE A LIST #
+#######################################
+
+test <- "831, 3669"
+tstrsp <- strsplit(test, ", ")
+t <- tstrsp[[1]]
+class(t)
+tnum <- as.numeric(t)
+tnum
+
+t.df <- df[ndowid %in% tnum, ]
+
+#######################################
+# TESTING CollarMap WITH SUBSET, %in% #
+#######################################
+
+test <- "3669, 831"
+test.spl <- strsplit(test, ", ")
+test.spl <- lapply(test.spl, as.numeric)
+test.spl <- test.spl[[1]]
+t.df <- df[ndowid %in% test.spl, ]
+
+CollarMap(t.df)

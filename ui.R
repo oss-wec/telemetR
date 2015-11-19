@@ -3,7 +3,7 @@ library(leaflet)
 
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
    tabPanel("Collared Animals",
-            fluidRow(h2("Filter Table"),
+            fluidRow(h2("Filter Data"),
                      column(4,
                             selectInput("species", "Species", 
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
@@ -43,7 +43,8 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
   ),
   
   tabPanel("Data",
-           hr(),
+           h2("All GPS Data"),
+           p("All GPS collar data for seleceted animals."),
            dataTableOutput("collar.table"))
   
 ))
