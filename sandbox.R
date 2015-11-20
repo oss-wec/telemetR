@@ -162,3 +162,9 @@ test.spl <- test.spl[[1]]
 t.df <- df[ndowid %in% test.spl, ]
 
 CollarMap(t.df)
+
+#############################
+# USING ALL THE COLLAR DATA #
+#############################
+
+dat <- fread("data/AllCollars (2).csv")

@@ -32,10 +32,10 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       h2("Animal Selection"),
                       
                       textInput("ndowid", "NDOW ID:", NULL),
-                      checkboxInput("use.date", "Use Date Range", value = FALSE),
                       dateRangeInput("dates", "Date Range:",
                                      start = "2010-01-01",
-                                     min = "2010-01-01")
+                                     min = "2010-01-01"),
+                      checkboxInput("use.date", "Use Date Range", value = FALSE)
                       )
     )
   ),
