@@ -39,4 +39,4 @@ The third page shows all the GPS data for individuals displayed on the map. This
 
 ## Demo
 
-![GPSextractor demo](C:\Users\Mgritts\Dropbox\R\CollarMapping\GPSextractor\demo.gif)
+[View a brief demo here.](https://drive.google.com/open?id=0B1OupsoLNZvkcExIT2VzcUlySWc)
