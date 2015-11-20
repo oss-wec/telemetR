@@ -35,4 +35,8 @@ The map can be filtered by individual by entering individual NDOW IDs in the *ND
 
 ### Data Page
 
-The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button. 
+The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button.
+
+## Demo
+
+![GPSextractor demo](C:\Users\Mgritts\Dropbox\R\CollarMapping\GPSextractor\demo.gif)
