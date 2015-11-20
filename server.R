@@ -6,9 +6,9 @@ source("global.R")
 
 # ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
 # CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS 
-dat <- fread("V:/ActiveProjects/WildlifeDiversity/Gritts_Mitch/AllCollars.csv")
+dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv")
 dat$date <- as.Date(dat$timestamp, format = "%m/%d/%Y %I:%M:%S %p")
-dat_animal <- read.csv("V:/ActiveProjects/WildlifeDiversity/Gritts_Mitch/collaredanimals2.csv")
+dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/collaredanimals2.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
