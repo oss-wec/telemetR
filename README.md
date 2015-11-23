@@ -43,7 +43,7 @@ The third page shows all the GPS data for individuals displayed on the map. This
 
 ## Demo
 
-[View a brief demo here.](https://drive.google.com/open?id=0B1OupsoLNZvkcExIT2VzcUlySWc)
+[View a brief demo here.](https://drive.google.com/file/d/0B1OupsoLNZvkcExIT2VzcUlySWc/view?usp=sharing)
 
 ## ToDo
 - [ ] Change name of column headers
