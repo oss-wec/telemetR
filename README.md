@@ -1,11 +1,31 @@
 # Collar Data Export
 A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
 
-## Requirements for the app
+## Justification
+
+We have organized all GPS collar location data ( >1.8 million records) into a single database yet all data output is limited to custom SQL statements and Microsoft Excel line limit (65,000 rows). This application provides a user interface for interactively and visually selecting GPS location data for export.
+
+## Use Case
+
+The application can be used anytime a subset of GPS collar data is needed for analysis. The collar manufacturer's website will be the most up to date data, if required use their proprietary applications.
+
+### Brownian Bridge Movement Models
+
+The location data for one Rocky Mountain bighorn sheep was exported to analyze the expected movement path using Brownian bridge movement models.
+
+![bbmm export](https://e3a0a746a3d3c5fa95928f1d69a3e9079c622a5f.googledrive.com/host/0B1OupsoLNZvkYTdtVFRIelBoN00/bbmm_example.jpg)
+
+### Quantifying Migration
+
+The location data for on mule deer was exported to quantify migration by plotting the net squared displacement against time.
+
+![bbmm export](https://e3a0a746a3d3c5fa95928f1d69a3e9079c622a5f.googledrive.com/host/0B1OupsoLNZvkYTdtVFRIelBoN00/nsd_example.jpg)
+
+## Requirements
 
 Download and install the latest versions of R [(R version 3.2.2)](https://cran.r-project.org/bin/windows/base/) and RStudio [(RStudio Desktop 0.99.489)](https://www.rstudio.com/products/rstudio/download/).
 
-copy and paste these commands into the RStudio console. If this is the first time you've used R you'll be asked to choose a CRAN mirror. Use the *US (CA-1) https mirror.* This will install the required packages for the app.
+Copy and paste these commands into the RStudio console. If this is the first time you've used R you'll be asked to choose a CRAN mirror. Use the *US (CA-1) https mirror.* This will install the required packages for the app.
 
 ```r
 install.packages("leaflet")
@@ -16,12 +36,14 @@ install.packages("shiny")
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
 ```r
-shiny::runGitHub("CollarDataExport", "kissmygritts")
+shiny::runGitHub("CollarDataExport", "mgritts")
 ```
 
 Permissions for the GIS data drive (V:/ActiveProjects/Game) is required to access the data for the application.
 
 ## Instructions
+
+General Instructions for the use of the application. If you want a more general introduction to R use the [Quick R website](http://www.statmethods.net). For additional analysis or visualizations in R contact Mitch Gritts.
 
 ### Collared Animals Page
 
@@ -35,7 +57,7 @@ The second page is a map plotted with the animals from the table on the Collared
 
 The map can be filtered by individual by entering individual NDOW IDs in the *NDOW ID* text box. The NDOW IDs used should be from the table on the Collared Animals Page. To enter more than one use a comma to separate NDOW IDs (ex: 831, 3669). To further filter the plot enter a *Date Range* and click the *Use Date Range* checkbox. This will only include points between the two dates.
 
-Delete the text in the input boxes and uncheck the *Use Date Range* to reset the filters on the map. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals.
+Delete the text in the input boxes and uncheck the *Use Date Range* to reset the filters on the map. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals. The default date range is 2010-01-01 to today's  date.
 
 ### Data Page
 
@@ -45,7 +67,15 @@ The third page shows all the GPS data for individuals displayed on the map. This
 
 [View a brief demo here.](https://drive.google.com/file/d/0B1OupsoLNZvkcExIT2VzcUlySWc/view?usp=sharing)
 
-## ToDo
+## About the Data
+
+The sources of raw data are the GPS collar manufacturers for each collar. This data is organized and maintained in a relational database by NDOW GIS & Game staff. New collar data is migrated to the database once a month. Therefore, the data in this application isn't the most up to date. At the greatest, the data is delayed by 30 days. The data is stored on NDOW's network, therefore users must be networked to and have permission for the Game folder on the GIS Share drive. This is due to the sensitive nature of location data. This is a temporary solution, we are looking for alternatives that will make the data more accessible to all staff that may use this data.
+
+## Known Bugs
+
+Occasionally the application will get stuck processing the data. If the first page of the application says "Processing..." for longer than 45 - 60 seconds close the window and rerun the application from R using the `shiny::runGitHub("CollarDataExport", "mgritts")` command.
+
+## TODO
 - [ ] Change name of column headers
 - [ ] Use 'start' and 'stop' markers for first and last points
 - [ ] Clear input on Map page when changing input on the first page
@@ -53,3 +83,5 @@ The third page shows all the GPS data for individuals displayed on the map. This
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered
 - [ ] Remove erroneous points, persists to data download
+
+To add items to the TODO list, or report errors that occur while using the app contact Mitch Gritts (mgritts@ndow.org).
