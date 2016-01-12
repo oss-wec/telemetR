@@ -52,7 +52,11 @@ shinyServer(function(input, output) {
     CollarMap(df_subset())
   })
   
-  output$collar.table <- DT::renderDataTable({
+  observeEvent(input$reset, {
+    shinyjs::reset("controls")
+  })
+  
+  output$collar.table <- renderDataTable({
     datatable(df_subset(), rownames = FALSE,
               class = "cell-border stripe")
   })

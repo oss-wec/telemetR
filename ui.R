@@ -20,12 +20,12 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                    
    tabPanel("Map",
     div(class = "outer",
-        
         tags$head(includeCSS("style.css")),
         
         leafletOutput("map", width = "100%", height = "100%"),
         
-        absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
+        absolutePanel(shinyjs::useShinyjs(),
+                      id = "controls", class = "panel panel-default", fixed = TRUE,
                       draggable = TRUE, width = 330, height = "auto",
                       top = 110, bottom = "auto", left = "auto", right = 10,
                       
@@ -35,7 +35,8 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       dateRangeInput("dates", "Date Range:",
                                      start = "2010-01-01",
                                      min = "2010-01-01"),
-                      checkboxInput("use.date", "Use Date Range", value = FALSE)
+                      checkboxInput("use.date", "Use Date Range", value = FALSE),
+                      actionButton("reset", "Reset Input")
                       )
     )
   ),
