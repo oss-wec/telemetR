@@ -1,4 +1,6 @@
 # Collar Data Export
+*0.5.0*
+
 A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
 
 ## Justification
@@ -23,7 +25,7 @@ The location data for on mule deer was exported to quantify migration by plottin
 
 ## Requirements
 
-Download and install the latest versions of R [(R version 3.2.2)](https://cran.r-project.org/bin/windows/base/) and RStudio [(RStudio Desktop 0.99.489)](https://www.rstudio.com/products/rstudio/download/).
+Download and install the latest versions of R [(R version 3.2.x)](https://cran.r-project.org/bin/windows/base/) and RStudio [(RStudio Desktop 0.99.x)](https://www.rstudio.com/products/rstudio/download/).
 
 Copy and paste these commands into the RStudio console. If this is the first time you've used R you'll be asked to choose a CRAN mirror. Use the *US (CA-1) https mirror.* This will install the required packages for the app.
 
@@ -32,6 +34,7 @@ install.packages("leaflet")
 install.packages("DT")
 install.packages("data.table")
 install.packages("shiny")
+install.packages("shinyjs")
 ```
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
@@ -73,12 +76,12 @@ The sources of raw data are the GPS collar manufacturers for each collar. This d
 
 ## Known Bugs
 
-Occasionally the application will get stuck processing the data. If the first page of the application says "Processing..." for longer than 45 - 60 seconds close the window and rerun the application from R using the `shiny::runGitHub("CollarDataExport", "mgritts")` command.
+Current version has no known bugs
 
 ## TODO
 - [ ] Change name of column headers
 - [ ] Use 'start' and 'stop' markers for first and last points
-- [ ] Clear input on Map page when changing input on the first page
+- [x] Clear/Reset Map page input
 - [ ] Use data.table for all data munging
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered

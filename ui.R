@@ -15,7 +15,6 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                         selected = 10
                             )
                      ),
-            hr(),
             DT::dataTableOutput("animal.table", width = "100%", height = "auto"))),   
                    
    tabPanel("Map",
@@ -46,6 +45,6 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
            p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),
            downloadButton("downloadData", "Download Data"),
            hr(),
-           dataTableOutput("collar.table"))
+           DT::dataTableOutput("collar.table"))
   
 ))

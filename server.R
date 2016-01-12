@@ -1,7 +1,7 @@
 library(shiny)
 library(leaflet)
 library(data.table)
-library(DT)
+#library(DT)
 source("global.R")
 
 # ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
@@ -20,7 +20,7 @@ shinyServer(function(input, output) {
     if (input$species == "MULD") {
       df <- df[df$mgmtarea == input$mgmtarea, ]
     }
-    datatable(df, rownames = FALSE,
+    DT::datatable(df, rownames = FALSE,
               class = "cell-border stripe")
   })
   
@@ -56,8 +56,8 @@ shinyServer(function(input, output) {
     shinyjs::reset("controls")
   })
   
-  output$collar.table <- renderDataTable({
-    datatable(df_subset(), rownames = FALSE,
+  output$collar.table <- DT::renderDataTable({
+    DT::datatable(df_subset(), rownames = FALSE,
               class = "cell-border stripe")
   })
   
