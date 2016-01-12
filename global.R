@@ -16,7 +16,8 @@ CollarMap <- function(dataframe) {
                         weight = 2, color = "black", opacity = .4)
     map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
                             stroke = FALSE, radius = 4, color = "navy",
-                            fillOpacity = 1)
+                            fillOpacity = 1,
+                            popup = paste("NDOW ID:", n))
   }
   return(map)
 }
