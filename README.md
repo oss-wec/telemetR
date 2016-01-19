@@ -23,6 +23,8 @@ The location data for on mule deer was exported to quantify migration by plottin
 
 ![bbmm export](https://e3a0a746a3d3c5fa95928f1d69a3e9079c622a5f.googledrive.com/host/0B1OupsoLNZvkYTdtVFRIelBoN00/nsd_example.jpg)
 
+*check the Migration Tab for more information.*
+
 ## Requirements
 
 Download and install the latest versions of R [(R version 3.2.x)](https://cran.r-project.org/bin/windows/base/) and RStudio [(RStudio Desktop 0.99.x)](https://www.rstudio.com/products/rstudio/download/).
@@ -35,6 +37,8 @@ install.packages("DT")
 install.packages("data.table")
 install.packages("shiny")
 install.packages("shinyjs")
+install.packages("ggplot2")
+install.packages("sp")
 ```
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
@@ -48,23 +52,27 @@ Permissions for the GIS data drive (V:/ActiveProjects/Game) is required to acces
 
 General Instructions for the use of the application. If you want a more general introduction to R use the [Quick R website](http://www.statmethods.net). For additional analysis or visualizations in R contact Mitch Gritts.
 
-### Collared Animals Page
+### Collared Animals Tab
 
 The application opens with a table of animals collared with GPS collars. The table can be filtered using the *Species* and *Management Area* drop down lists. The *Management Area* drop down only filters the table for Mule Deer.
 
 Any field in the table can be searched using the search bar on the right. The table can be sorted by clicking the arrows next to each column name.
 
-### Map Page
+### Map Tab
 
 The second page is a map plotted with the animals from the table on the Collared Animals Page. The blue dots represent the first and last GPS location of the animal. The grey line is a smoothed path (every 20 locations) between the first and last point.
 
 The map can be filtered by individual by entering individual NDOW IDs in the *NDOW ID* text box. The NDOW IDs used should be from the table on the Collared Animals Page. To enter more than one use a comma to separate NDOW IDs (ex: 831, 3669). To further filter the plot enter a *Date Range* and click the *Use Date Range* checkbox. This will only include points between the two dates.
 
-Delete the text in the input boxes and uncheck the *Use Date Range* to reset the filters on the map. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals. The default date range is 2010-01-01 to today's  date.
+Use the reset tab to reset the input to the original values. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals. The default date range is 2010-01-01 to today's  date.
 
-### Data Page
+### Data Tab
 
-The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not only every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button. The downloaded data will include every GPS location.
+The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not only every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button, and saved to your Downloads folder. The downloaded data will include every GPS location.
+
+### Migration Tab
+
+This tab will plot the Net Squared Displacement (NSD) for analysis and visual inspection of migration. Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information.
 
 ## Demo
 
@@ -82,9 +90,12 @@ Current version has no known bugs
 - [ ] Change name of column headers
 - [ ] Use 'start' and 'stop' markers for first and last points
 - [x] Clear/Reset Map page input
+- [ ] Reset input on tab change... may not be possible?
 - [ ] Use data.table for all data munging
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered
 - [ ] Remove erroneous points, persists to data download
+- [x] Include migration analysis plots
+- [ ] Include brownian bridge output. As shapefile?
 
-To add items to the TODO list, or report errors that occur while using the app contact Mitch Gritts (mgritts@ndow.org).
+To add items to the TODO list, or report errors that occur while using the application contact Mitch Gritts (mgritts@ndow.org).
