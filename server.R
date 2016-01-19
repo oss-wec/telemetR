@@ -1,14 +1,16 @@
 library(shiny)
 library(leaflet)
 library(data.table)
-library(DT)
+#library(DT)
 source("global.R")
 
 # ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
 # CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS 
 dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv")
+#dat <- fread("AllCollars.csv")
 dat$date <- as.Date(dat$timestamp, format = "%m/%d/%Y %I:%M:%S %p")
-dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/collaredanimals2.csv")
+dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
+#dat_animal <- read.csv("Animals.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
@@ -20,7 +22,7 @@ shinyServer(function(input, output) {
     if (input$species == "MULD") {
       df <- df[df$mgmtarea == input$mgmtarea, ]
     }
-    datatable(df, rownames = FALSE,
+    DT::datatable(df, rownames = FALSE,
               class = "cell-border stripe")
   })
   
@@ -52,8 +54,12 @@ shinyServer(function(input, output) {
     CollarMap(df_subset())
   })
   
+  observeEvent(input$reset, {
+    shinyjs::reset("controls")
+  })
+  
   output$collar.table <- DT::renderDataTable({
-    datatable(df_subset(), rownames = FALSE,
+    DT::datatable(df_subset(), rownames = FALSE,
               class = "cell-border stripe")
   })
   
@@ -63,4 +69,15 @@ shinyServer(function(input, output) {
       write.csv(df_subset(), file)
     }
   )
+  
+  migration_df <- eventReactive(input$plotMigration,  {
+    df <- Calculate_NSD(df_subset())
+    return(df)
+  })
+  
+  output$migrationAnalysis <- renderPlot({
+    Plot_NSD(migration_df())
+  })
+  
+  #new command goes here
 })

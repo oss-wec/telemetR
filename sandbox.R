@@ -168,3 +168,101 @@ CollarMap(t.df)
 #############################
 
 dat <- fread("data/AllCollars (2).csv")
+
+##############################
+# TESTING MIGRATION ANALYSIS #
+##############################
+
+#TESTING FUNCTION
+dat <- read.csv("CollarData.csv")
+nsd <- Calculate_NSD(dat)
+plot(nsd$date, nsd$NSD)
+
+dat$timestamp <- as.character(dat$timestamp)
+dat$timestamp <- as.POSIXlt.character(dat$timestamp, 
+                                      format = ("%m/%d/%Y %H:%M:%S %p"))
+
+#PLOTTING NDS
+ggplot2::ggplot(nsd, ggplot2::aes(timestamp, NSD)) +
+  ggplot2::geom_line() +
+  ggplot2::theme_bw()
+
+
+Plot_NSD <- function(dataframe) {
+  unq_id <- unique(dataframe$ndowid)
+  p <- ggplot2::ggplot(nsd, ggplot2::aes(x = timestamp, y = NSD)) +
+    ggplot2::geom_line(color = 'red') +
+    ggplot2::theme_bw()
+  return(p)
+}
+
+Plot_NSD(nsd)
+
+#TESTING MULTIPLE ANIMALS
+dat <- read.csv("CollarData (2).csv")
+nsd <- Calculate_NSD(dat)
+Plot_NSD(nsd)
+
+#PRETTY PLOT
+ggplot(nsd, aes(x = timestamp, y = NSD, group = ndowid)) +
+  geom_line(color = 'firebrick4', size = .75) +
+  theme_fivethirtyeight()
+
+p <- ggplot(dataframe, aes(x = timestamp, y = NSD, group = ndowid)) +
+  geom_line(color = 'firebrick4', size = .75) +
+  facet_wrap(~ndowid) +
+  labs(y = 'Net Squared Displacement') +
+  theme(panel.background = element_rect(fill = 'grey90'),
+        plot.background = element_rect(fill = 'grey90'),
+        panel.grid.major.x = element_line(color = 'grey70', size = 1, linetype = 'dotted'),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(color = 'grey50', size = 14),
+        axis.text.x = element_text(color = 'grey50', size = 10),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_text(color = 'grey50', size = 12))
+
+Plot_NSD <- function(dataframe) {
+  p <- ggplot(dataframe, aes(x = timestamp, y = NSD, group = ndowid)) +
+    geom_line(color = 'firebrick4', size = .75) +
+    facet_wrap(~ndowid) +
+    labs(y = 'Net Squared Displacement') +
+    theme(panel.background = element_rect(fill = 'grey90'),
+          plot.background = element_rect(fill = 'grey90'),
+          panel.grid.major.x = element_line(color = 'grey70', size = 1, linetype = 'dotted'),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(color = 'grey50', size = 14),
+          axis.text.x = element_text(color = 'grey50', size = 10),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(color = 'grey50', size = 12))
+  return(p)
+}
+
+Plot_NSD(nsd)
+
+#TRYING TO AVERAGE HERD NSD
+df <- nsd[, c(3, 11, 14)]
+df$month <- month(df$date)
+df$day <- day(df$date)
+df$year <- year(df$date)
+
+df_gb <- df %>% 
+  group_by(date) %>% 
+  summarize(m_nsd = mean(NSD, na.rm = TRUE))
+
+ggplot(df_gb, aes(x = as.character(date), y = m_nsd)) +
+  geom_line()
+
+
+# RUNNING WITH DATA FROM APP. APP IS ERRORING FOR DATA.TABLE REASONS??
+dat <- read.csv("CollarData (3).csv")
+

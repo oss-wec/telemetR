@@ -15,3 +15,8 @@ vignettes/*.pdf
 # data
 data
 demo.gif
+*.csv
+*.pdf
+
+# test files
+test.R
