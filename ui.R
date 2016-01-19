@@ -5,7 +5,7 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
    tabPanel("Collared Animals",
             fluidRow(h2("Filter Data"),
                      column(4,
-                            selectInput("species", "Species", 
+                            selectInput("species", "Species",
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
                                         )
                             ),
@@ -15,21 +15,21 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                         selected = 10
                             )
                      ),
-            DT::dataTableOutput("animal.table", width = "100%", height = "auto"))),   
-                   
+            DT::dataTableOutput("animal.table", width = "100%", height = "auto"))),
+
    tabPanel("Map",
     div(class = "outer",
         tags$head(includeCSS("style.css")),
-        
+
         leafletOutput("map", width = "100%", height = "100%"),
-        
+
         absolutePanel(shinyjs::useShinyjs(),
                       id = "controls", class = "panel panel-default", fixed = TRUE,
                       draggable = TRUE, width = 330, height = "auto",
                       top = 110, bottom = "auto", left = "auto", right = 10,
-                      
+
                       h2("Animal Selection"),
-                      
+
                       textInput("ndowid", "NDOW ID:", NULL),
                       dateRangeInput("dates", "Date Range:",
                                      start = "2010-01-01",
@@ -39,14 +39,14 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       )
     )
   ),
-  
+
   tabPanel("Data",
            h2("All GPS Data"),
            p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),
            downloadButton("downloadData", "Download Data"),
            hr(),
            DT::dataTableOutput("collar.table")),
-  
+
   tabPanel("Migration",
            h2("Migration Analysis"),
            p("To quantify migration we use the Net Squared Displacement determing the distance from the winter range."),
@@ -54,5 +54,4 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
            hr(),
            plotOutput("migrationAnalysis")
            )
-  
 ))

@@ -4,13 +4,12 @@ library(data.table)
 #library(DT)
 source("global.R")
 
-# ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN 
-# CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS 
+# ALL COLLARS. HOPEFULLY CONNECT TO THE DATABASE TO GET THIS DATA. IF I CAN
+# CONNECT TO THE DATABASE I'LL USE SPECIES AND MANAGEMENT AREA AS QUERY PARAMETERS
 dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv")
 #dat <- fread("AllCollars.csv")
 dat$date <- as.Date(dat$timestamp, format = "%m/%d/%Y %I:%M:%S %p")
 dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-#dat_animal <- read.csv("Animals.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
@@ -25,15 +24,15 @@ shinyServer(function(input, output) {
     DT::datatable(df, rownames = FALSE,
               class = "cell-border stripe")
   })
-  
-  # SUBSET GPS DATA BY SPECIES  
+
+  # SUBSET GPS DATA BY SPECIES
   id_list <- reactive({
     id_list <- strsplit(input$ndowid, ", ")
     id_list <- id_list[[1]]
     id_list <- as.numeric(id_list)
     return(id_list)
   })
-  
+
   df_subset <- reactive({
     if (is.null(input$ndowid) | input$ndowid == "") {
       df <- dat[species == input$species, ]
@@ -49,35 +48,35 @@ shinyServer(function(input, output) {
     }
     return(df)
   })
-  
+
   output$map <- renderLeaflet({
     CollarMap(df_subset())
   })
-  
+
   observeEvent(input$reset, {
     shinyjs::reset("controls")
   })
-  
+
   output$collar.table <- DT::renderDataTable({
     DT::datatable(df_subset(), rownames = FALSE,
               class = "cell-border stripe")
   })
-  
+
   output$downloadData <- downloadHandler(
     filename = function() {paste("CollarData", ".csv", sep = "")},
     content = function(file) {
       write.csv(df_subset(), file)
     }
   )
-  
+
   migration_df <- eventReactive(input$plotMigration,  {
     df <- Calculate_NSD(df_subset())
     return(df)
   })
-  
+
   output$migrationAnalysis <- renderPlot({
     Plot_NSD(migration_df())
   })
-  
+
   #new command goes here
 })
