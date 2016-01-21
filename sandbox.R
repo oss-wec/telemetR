@@ -266,3 +266,50 @@ ggplot(df_gb, aes(x = as.character(date), y = m_nsd)) +
 # RUNNING WITH DATA FROM APP. APP IS ERRORING FOR DATA.TABLE REASONS??
 dat <- read.csv("CollarData (3).csv")
 
+##############################
+# USING HTML WIDGETS FOR NSD #
+##############################
+library(metricsgraphics)
+library(htmltools)
+library(htmlwidgets)
+source('https://raw.githubusercontent.com/kissmygritts/NDOW_NBGDS/master/Calculate_NSD.R')
+
+dat <- read.csv('CollarData.csv')
+dat.nsd <- Calculate_NSD(dat)
+
+tmp <- dat.nsd[, .(date = as.Date(date), NSD)]
+
+tmp %>% 
+  mjs_plot(x = date, y = NSD) %>% 
+  mjs_line(color = "red") %>% 
+  mjs_axis_x(xax_format = "date") %>% 
+  mjs_axis_y(show = FALSE) %>% 
+  mjs_labs(y_label = "Net Square Displacement")
+  
+# MULTIPLE NDOWIDS
+
+dat <- read.csv('CollarData (2).csv')
+levels(as.factor(dat[, 'ndowid']))
+dat <- Calculate_NSD(dat)
+levels(as.factor(dat[, ndowid]))
+
+plot_nsd_mjs <- function(dat) {
+  # add nsd check here, if false calculate nsd
+  dat <- as.data.table(dat, .(ndowid, date, NSD))
+  dat[, date := as.Date(date)]
+  unq <- unique(dat[, ndowid])
+  lapply(unq, function(x) {
+    mjs_plot(dat[ndowid == x], x = date, y = NSD, 
+             width = 900, height = 400) %>% 
+      mjs_line() %>% 
+      mjs_axis_x(xax_format = "date") %>% 
+      mjs_labs(x_label = paste("NDOW ID: ", x))
+  }) -> mjs_plots
+  return(mjs_plots)
+}
+
+p <- plot_nsd_mjs(dat)
+
+html_print(mjs_grid(p, nrow = 5, ncol = 1))
+
+dat[, date := as.Date(date)]
