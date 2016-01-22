@@ -40,13 +40,6 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
     )
   ),
 
-  tabPanel("Data",
-           h2("All GPS Data"),
-           p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),
-           downloadButton("downloadData", "Download Data"),
-           hr(),
-           DT::dataTableOutput("collar.table")),
-
   tabPanel("Migration",
            h2("Migration Analysis"),
            p("A showing Net Squared Displacement (NSD), a measurement of the distance from the home range. 
@@ -59,5 +52,12 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
            br(),
            p("A map of every GPS fix for the selected animals. To turn animals on and off use the radio buttons on the right.
              This serves as a visual inspection of the data for erraneous locations. Further analysis is available.")
-           )
+           ),
+  
+  tabPanel("Data",
+           h2("All GPS Data"),
+           p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),
+           downloadButton("downloadData", "Download Data"),
+           hr(),
+           DT::dataTableOutput("collar.table"))
 ))
