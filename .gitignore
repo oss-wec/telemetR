@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
+.DS_Store
 
 # Example code in package build process
 *-Ex.R
@@ -15,8 +16,10 @@ vignettes/*.pdf
 # data
 data
 demo.gif
+.RData
 *.csv
 *.pdf
 
 # test files
 test.R
+.Rproj.user

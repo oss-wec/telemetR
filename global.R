@@ -51,11 +51,11 @@ Plot_NSD <- function(dataframe) {
     geom_line(color = 'firebrick4', size = .75) +
     facet_wrap(~ndowid) +
     labs(y = 'Net Squared Displacement') +
-    theme(panel.background = element_rect(fill = 'grey90'),
-          plot.background = element_rect(fill = 'grey90'),
-          panel.grid.major.x = element_line(color = 'grey70', size = 1, linetype = 'dotted'),
+    theme(panel.background = element_rect(fill = 'white'),
+          plot.background = element_rect(fill = 'white'),
+          panel.grid.major.x = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
           panel.grid.minor.x = element_blank(),
-          panel.grid.major.y = element_blank(),
+          panel.grid.major.y = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
           panel.grid.minor.y = element_blank(),
           axis.title.x = element_blank(),
           axis.title.y = element_text(color = 'grey50', size = 14),
@@ -65,4 +65,44 @@ Plot_NSD <- function(dataframe) {
           strip.background = element_blank(),
           strip.text = element_text(color = 'grey50', size = 12))
   return(p)
+}
+
+DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
+  dat <- as.data.table(dataframe)
+  dat <- dat[complete.cases(dat[, .(long_x, lat_y)])]
+  unique.id <- unique(dat$ndowid)
+  pal <- ggthemes::gdocs_pal()(20)
+  
+  device.map <- leaflet() %>% 
+    addProviderTiles(basemap, group = "topo") %>% 
+    addProviderTiles("MapQuestOpen.Aerial", group = "satelite")
+  layer.group <- list()
+  
+  for(i in 1:length(unique.id)) {
+    df <- dat[ndowid == unique.id[i]]
+    device.map <- addPolylines(device.map, 
+                               lng = df$long_x, lat = df$lat_y,
+                               group = as.character(unique.id[i]),
+                               color = "grey",
+                               weight = 2
+    )
+    #df <- df[, .SD[c(seq(1, .N, 5), .N)]]
+    device.map <- addCircleMarkers(device.map,
+                                   lng = df$long_x, lat = df$lat_y,
+                                   group = as.character(unique.id[i]),
+                                   radius = 3,
+                                   stroke = FALSE,
+                                   fillOpacity = .5,
+                                   color = pal[i],
+                                   popup = paste(sep = "<br>",
+                                                 paste("<b>NDOW ID:</b> ", unique.id[i]),
+                                                 paste("<b>timestamp:</b> ", df$timestamp),
+                                                 paste("<b>LocID</b>: ", df$locid))
+    )
+    layer.group <- c(layer.group, as.character(unique.id[i]))
+  } 
+  device.map <- addLayersControl(device.map,
+                                 baseGroup = c("topo", "satellite"),
+                                 overlayGroups = layer.group)
+  return(device.map)
 }

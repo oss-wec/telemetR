@@ -49,9 +49,15 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
 
   tabPanel("Migration",
            h2("Migration Analysis"),
-           p("To quantify migration we use the Net Squared Displacement determing the distance from the winter range."),
+           p("A showing Net Squared Displacement (NSD), a measurement of the distance from the home range. 
+             Limit the number of animals for analysis to 20. The more animals selected the messier the plots become."),
            actionButton("plotMigration", "Run Analysis"),
            hr(),
-           plotOutput("migrationAnalysis")
+           plotOutput("migrationAnalysis"),
+           hr(),
+           leafletOutput('allpoints', height = "800"),
+           br(),
+           p("A map of every GPS fix for the selected animals. To turn animals on and off use the radio buttons on the right.
+             This serves as a visual inspection of the data for erraneous locations. Further analysis is available.")
            )
 ))

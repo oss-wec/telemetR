@@ -1,5 +1,5 @@
 # Collar Data Export
-*0.5.0*
+*0.6.0*
 
 A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
 
@@ -96,8 +96,10 @@ Current version has no known bugs
 - [ ] Use data.table for all data munging
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered
-- [ ] Remove erroneous points, persists to data download
+- [ ] Remove erroneous points, persistent to data download
 - [x] Include migration analysis plots
-- [ ] Include brownian bridge output. As shapefile?
+- [ ] Include utilization distributions.
+  - [ ] As shapefile?
+- [x] NSD plots and associated maps
 
 To add items to the TODO list, or report errors that occur while using the application contact Mitch Gritts (mgritts@ndow.org).
