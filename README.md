@@ -72,7 +72,9 @@ The third page shows all the GPS data for individuals displayed on the map. This
 
 ### Migration Tab
 
-This tab will plot the Net Squared Displacement (NSD) for analysis and visual inspection of migration. Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information.
+This tab can be used to calculate Net Squared Displacement (NSD), and basic utilization distributions (TODO) overlayed on a map. Visual inspection of selected GPS data and basic analyses are available. Further development is in progress.
+
+Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information on NSD calculations and utility.
 
 ## Demo
 
