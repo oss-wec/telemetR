@@ -313,3 +313,8 @@ p <- plot_nsd_mjs(dat)
 html_print(mjs_grid(p, nrow = 5, ncol = 1))
 
 dat[, date := as.Date(date)]
+
+################
+# adehabitatLT #
+################
+
