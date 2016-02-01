@@ -1,5 +1,8 @@
 library(data.table)
 library(leaflet)
+library(sp)
+library(adehabitatHR)
+library(ggplot2)
 
 dat_animal <- fread("data/collared_animals.csv")
 dat_animal[Species == "DBHS"]
@@ -317,4 +320,276 @@ dat[, date := as.Date(date)]
 ################
 # adehabitatLT #
 ################
+library(adehabitatLT)
+library(adehabitatHR)
+dat <- read.csv("CollarData.csv")
+dat$timestamp <- as.POSIXct(dat$timestamp)
 
+dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
+geocoord <- sp::SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = sp::CRS("+proj=longlat"))
+utmcoord <- as.data.frame(sp::spTransform(geocoord, sp::CRS("+proj=utm +zone=11")))
+colnames(utmcoord) <- c("Easting", "Northing")
+dat <- cbind(dat, utmcoord)
+rm(utmcoord); rm(geocoord)
+
+traj <- as.ltraj(dat[, 12:13], date = dat$timestamp, id = dat$ndowid)
+df.traj <- traj[[1]]
+
+plot(traj)
+
+## brownian bridge in adehabitatHR
+bb.traj <- kernelbb(traj, sig1 = 6.23, sig2 = 58, grid = 50)
+bb.traj
+
+# merging utilization polygons
+ud50 <- getverticeshr(bb.traj, 50)
+ud90 <- getverticeshr(bb.traj, 90)
+conts <- rbind(ud50, ud90, makeUniqueIDs = T)
+conts@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+conts.latlong <- spTransform(conts, CRS("+proj=longlat"))
+
+leaflet(conts.latlong) %>% addProviderTiles(("Esri.WorldImagery")) %>% 
+  addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4) %>% 
+  addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, color = "red", stroke = F, radius = 3)
+
+# plotting on leaflet map.
+ud50@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+ud50.latlong <- spTransform(ud50, CRS("+proj=longlat"))
+ud90@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+ud90.latlong <- spTransform(ud90, CRS("+proj=longlat"))
+
+# teasing out multipolygon sp::SPDFs for leaflet mapping
+ud50.latlong@polygons[[1]]@Polygons[[1]]@coords
+
+leaflet(ud50.latlong) %>% addProviderTiles(("Esri.WorldTerrain")) %>% addPolygons()
+
+leaflet() %>% addProviderTiles(("Esri.WorldTopoMap")) %>% 
+  addPolygons(lat <- ud50.latlong@polygons[[1]]@Polygons[[1]]@coords[, 1],
+              lng <- ud50.latlong@polygons[[1]]@Polygons[[1]]@coords[, 2], stroke = F, color = "navy") %>% 
+  addPolygons(lat <- ud50.latlong@polygons[[1]]@Polygons[[2]]@coords[, 1],
+              lng <- ud50.latlong@polygons[[1]]@Polygons[[2]]@coords[, 2], stroke = F, color = "navy") %>%
+  addPolygons(lat <- ud90.latlong@polygons[[1]]@Polygons[[1]]@coords[, 1],
+              lng <- ud90.latlong@polygons[[1]]@Polygons[[1]]@coords[, 2], stroke = F, color = "navy") %>% 
+  addPolygons(lat <- ud90.latlong@polygons[[1]]@Polygons[[2]]@coords[, 1],
+              lng <- ud90.latlong@polygons[[1]]@Polygons[[2]]@coords[, 2], stroke = F, color = "navy") %>% 
+  addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, color = "red", stroke = F, radius = 3)
+  
+## Brownian Bridge with all 3494 locations
+dat <- read.csv("CollarData3494.csv")
+dat$timestamp <- as.POSIXct(dat$timestamp)
+dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
+geocoord <- sp::SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = sp::CRS("+proj=longlat"))
+utmcoord <- as.data.frame(sp::spTransform(geocoord, sp::CRS("+proj=utm +zone=11")))
+colnames(utmcoord) <- c("Easting", "Northing")
+dat <- cbind(dat, utmcoord)
+rm(utmcoord); rm(geocoord)
+
+traj <- as.ltraj(dat[, 12:13], date = dat$timestamp, id = dat$ndowid)
+bb.traj <- kernelbb(traj, sig1 = 6.23, sig2 = 58, grid = 50)
+
+ud50 <- getverticeshr(bb.traj, 50)
+ud90 <- getverticeshr(bb.traj, 90)
+conts <- rbind(ud50, ud90, makeUniqueIDs = T)
+conts@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+conts.latlong <- spTransform(conts, CRS("+proj=longlat"))
+
+leaflet(conts.latlong) %>% addProviderTiles(("Esri.WorldTopoMap")) %>% 
+  addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4) %>% 
+  addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, color = "red", stroke = F, radius = 3)
+
+## Brownian Bridge with all 4133 locations
+dat <- read.csv("CollarData4133.csv")
+dat$timestamp <- as.POSIXct(dat$timestamp, format('%Y-%m-%d %H:%M:%S'))
+dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
+geocoord <- sp::SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = sp::CRS("+proj=longlat"))
+utmcoord <- as.data.frame(sp::spTransform(geocoord, sp::CRS("+proj=utm +zone=11")))
+colnames(utmcoord) <- c("Easting", "Northing")
+dat <- cbind(dat, utmcoord)
+rm(utmcoord); rm(geocoord)
+
+traj <- as.ltraj(dat[, 12:13], date = dat$timestamp, id = dat$ndowid)
+bb.traj <- kernelbb(traj, sig1 = 6.23, sig2 = 58, grid = 50)
+
+ud50 <- getverticeshr(bb.traj, 50)
+ud90 <- getverticeshr(bb.traj, 90)
+conts <- rbind(ud50, ud90, makeUniqueIDs = T)
+conts@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+conts.latlong <- spTransform(conts, CRS("+proj=longlat"))
+
+leaflet(conts.latlong) %>% addProviderTiles(("Esri.WorldTopoMap")) %>% 
+  addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4) %>% 
+  addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, color = "red", stroke = F, radius = 3)
+
+## FULL BROWNIAN BRIDGE EXAMPLE, WITH ESTIMATED SIG1 
+library(adehabitatHR)
+library(leaflet)
+
+# cleaning data for ltraj conversion
+dat <- read.csv("CollarData3494.csv")
+dat$timestamp <- as.POSIXct(dat$timestamp)
+dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
+geocoord <- sp::SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = sp::CRS("+proj=longlat"))
+utmcoord <- as.data.frame(sp::spTransform(geocoord, sp::CRS("+proj=utm +zone=11")))
+colnames(utmcoord) <- c("Easting", "Northing")
+dat <- cbind(dat, utmcoord)
+rm(utmcoord); rm(geocoord)
+
+# convert to ltraj and estimate BBMM UD
+traj <- as.ltraj(dat[, 12:13], date = dat$timestamp, id = dat$ndowid)
+lik <- liker(traj, sig2 = 40, rangesig1 = c(1, 10))
+bb <- kernelbb(traj, sig1 = 5, sig2 = 40, grid = 150)
+
+# extract UD polygons and plot using leaflet
+ud95 <- getverticeshr(bb, 95)
+ud95@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+ud95.latlong <- spTransform(ud95, CRS("+proj=longlat"))
+leaflet(ud95.latlong) %>% addProviderTiles(("Esri.WorldTopoMap")) %>% 
+  addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4) %>% 
+  addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, color = "red", stroke = F, radius = 3)
+
+# encapsulating the munging, then the functions
+library(adehabitatHR)
+library(leaflet)
+dat <- read.csv("CollarData3494.csv")
+
+estimate_bbmm <- function(dat) {
+  dat <- as.data.frame(dat)
+  dat <- dat[complete.cases(dat[, c("long_x", "lat_y", "timestamp")]), ] 
+  dat$timestamp <- as.POSIXct(dat$timestamp)
+  
+  coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = CRS("+proj=longlat"))
+  coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
+  colnames(coord_conv) <- c("Easting", "Northing")
+  dat <- cbind(dat, coord_conv)
+  
+  traj <- as.ltraj(dat[, c("Easting", "Northing")], date = dat$timestamp, id = dat$ndowid)
+  sig1 <- liker(traj, sig2 = 40, rangesig1 = c(1, 100), plotit = FALSE)
+  bb <- kernelbb(traj, sig1[[1]]$sig1, 40, grid = 500)
+  return(bb)
+}
+
+get_ud <- function(bb, pct_ud) {
+  ud <- getverticeshr(bb, pct_ud)
+  ud@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+  ud <- spTransform(ud, CRS("+proj=longlat"))
+  return(ud)
+}
+
+map_ud <- function(dat, ud) {
+  dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
+  map <- leaflet(ud) %>% addProviderTiles("Esri.WorldTopoMap") %>% 
+    addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4,
+                group = "BBMM 95%") %>% 
+    addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, 
+                     color = "red", stroke = F, radius = 3)
+  return(map)
+}
+
+# testing 
+system.time(x <- estimate_bbmm(dat))
+image(x)
+plot(getverticeshr(x, 95), add = T, lwd = 2)
+p <- get_ud(x, 95)
+map_ud(dat, p)
+
+# more testing
+dat <- read.csv("CollarData4133.csv")
+dat$timestamp <- as.POSIXct(dat$timestamp, format = '%Y-%m-%d %H:%M:%S')
+system.time(x <- estimate_bbmm(dat))
+image(x)
+plot(getverticeshr(x, 99), add = T, lwd = 2)
+p <- get_ud(x, 99)
+map_ud(dat, p)
+
+######################
+# EDA figures in app #
+######################
+dat <- read.csv("CollarData3494.csv")
+
+to_ltraj <- function(dat) {
+  dat <- as.data.frame(dat)
+  dat <- dat[complete.cases(dat[, c("long_x", "lat_y", "timestamp")]), ] 
+  dat$timestamp <- as.POSIXct(dat$timestamp)
+  
+  coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = CRS("+proj=longlat"))
+  coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
+  colnames(coord_conv) <- c("Easting", "Northing")
+  dat <- cbind(dat, coord_conv)
+  
+  traj <- as.ltraj(dat[, c("Easting", "Northing")], date = dat$timestamp, id = dat$ndowid)
+  return(traj)
+}
+
+traj <- to_ltraj(dat)[[1]]   #returns data frame from trajectory
+traj$cummdist <- cumsum(traj$dist)
+
+# these are the figures that I want to include in the web app
+plot(traj$date, traj$cummdist)
+plot(traj$date, traj$R2n)
+plot(traj$date, traj$dist)
+plot(traj$date, (traj$dist/traj$dt))
+hist(traj$dist)
+
+ggplot(traj, aes(x = traj$date, y = traj$cummdist)) +
+  geom_line()
+ggplot(traj, aes(x = date, y = R2n)) +
+  geom_line()
+ggplot(traj, aes(x = date, y = dist)) +
+  geom_line()
+ggplot(traj, aes(x = date, y = dist/(dt * (1/60) * (1/60)))) +
+  geom_point()
+ggplot(traj, aes(x = dist)) +
+  geom_histogram()
+
+# generalizing plot functions
+
+movement_eda <- function(dat, plot_var, type = 'line') {
+  p <- ggplot(dat)
+  if(type == 'hist'){
+    p <- p + geom_histogram(aes_string(x = plot_var),
+                            binwidth = 500, fill = 'firebrick4', color = 'white')
+  } else if (type == 'line'){
+    p <- p + geom_line(aes_string(x = 'date', y = plot_var),
+                                  color = 'firebrick4', size = .75)
+  } else if (type == 'point'){
+    p <- p + geom_point(aes_string(x = 'date', y = plot_var),
+                        color = 'firebrick4', size = 1.2)
+  }
+  p <- p + theme(panel.background = element_rect(fill = 'white'),
+           plot.background = element_rect(fill = 'white'),
+           panel.grid.major.x = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
+           panel.grid.minor.x = element_blank(),
+           panel.grid.major.y = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
+           panel.grid.minor.y = element_blank(),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(color = 'grey50', size = 14),
+           axis.text.x = element_text(color = 'grey50', size = 10),
+           axis.text.y = element_text(color = 'grey50', size = 10),
+           axis.ticks = element_blank(),
+           strip.background = element_blank(),
+           strip.text = element_text(color = 'grey50', size = 12))
+  return(p)
+}
+
+library(gridExtra)
+grid.arrange(movement_eda(traj, "cummdist"),
+             movement_eda(traj, "R2n"),
+             movement_eda(traj, "dist", "point"),
+             movement_eda(traj, "dist", "hist"), ncol = 1)
+
+movement_eda(traj, "cummdist")
+movement_eda(traj, "R2n")
+movement_eda(traj, "dist", "point")
+movement_eda(traj, "dist", "hist")
