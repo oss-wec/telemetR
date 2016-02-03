@@ -2,6 +2,7 @@ library(data.table)
 library(leaflet)
 library(ggplot2)
 library(sp)
+library(adehabitatHR)
 
 CollarMap <- function(dataframe) {
   df <- as.data.table(dataframe)
@@ -105,4 +106,61 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
                                  baseGroup = c("topo", "satellite"),
                                  overlayGroups = layer.group)
   return(device.map)
+}
+
+to_ltraj <- function(dat) {
+  dat <- as.data.frame(dat)
+  dat$timestamp <- as.POSIXct(dat$timestamp, format = '%Y-%m-%d %H:%M:%S')
+  dat <- dat[complete.cases(dat[, c("long_x", "lat_y", "timestamp")]), ] 
+  coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
+                                    as.numeric(dat$lat_y)),
+                              proj4string = CRS("+proj=longlat"))
+  coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
+  colnames(coord_conv) <- c("Easting", "Northing")
+  dat <- cbind(dat, coord_conv)
+  
+  traj <- as.ltraj(dat[, c("Easting", "Northing")], date = dat$timestamp, id = dat$ndowid)
+  traj[[1]]$sig.dist <- cumsum(traj[[1]]$dist)
+  return(traj)
+}
+
+movement_eda <- function(dat, plot_var, type = 'line', color) {
+  p <- ggplot(dat)
+  if(type == 'hist'){
+    p <- p + geom_histogram(aes_string(x = plot_var),
+                            fill = color)
+  } else if (type == 'line'){
+    p <- p + geom_line(aes_string(x = 'date', y = plot_var),
+                       color = color, size = .75)
+  } else if (type == 'point'){
+    p <- p + geom_point(aes_string(x = 'date', y = plot_var),
+                        color = color, size = 1.3)
+  }
+  p <- p + theme(panel.background = element_rect(fill = 'white'),
+                 plot.background = element_rect(fill = 'white'),
+                 panel.grid.major.x = element_line(color = 'grey90', size = .5),
+                 panel.grid.minor.x = element_blank(),
+                 panel.grid.major.y = element_line(color = 'grey90', size = .5),
+                 panel.grid.minor.y = element_blank(),
+                 axis.title.x = element_blank(),
+                 axis.title.y = element_text(color = 'grey50', size = 14),
+                 axis.text.x = element_text(color = 'grey50', size = 10),
+                 axis.text.y = element_text(color = 'grey50', size = 10),
+                 axis.ticks = element_blank(),
+                 strip.background = element_blank(),
+                 strip.text = element_text(color = 'grey50', size = 12))
+  return(p)
+}
+
+estimate_bbmm <- function(traj) {
+  sig1 <- liker(traj, sig2 = 40, rangesig1 = c(1, 10), plotit = FALSE)
+  bb <- kernelbb(traj, sig1[[1]]$sig1, 40, grid = 100)
+  return(bb)
+}
+
+get_ud <- function(bb, pct_ud) {
+  ud <- getverticeshr(bb, pct_ud)
+  ud@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
+  ud <- spTransform(ud, CRS("+proj=longlat"))
+  return(ud)
 }

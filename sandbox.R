@@ -488,10 +488,10 @@ get_ud <- function(bb, pct_ud) {
 map_ud <- function(dat, ud) {
   dat <- dat[complete.cases(dat[, c("long_x", "lat_y")]), ]
   map <- leaflet(ud) %>% addProviderTiles("Esri.WorldTopoMap") %>% 
-    addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4,
-                group = "BBMM 95%") %>% 
     addCircleMarkers(lng = dat$long_x, lat = dat$lat_y, 
-                     color = "red", stroke = F, radius = 3)
+                     color = "red", stroke = F, radius = 3) %>% 
+    addPolygons(stroke = F, color = "midnightblue", fillOpacity = .4,
+                group = "BBMM 95%")
   return(map)
 }
 
@@ -502,14 +502,48 @@ plot(getverticeshr(x, 95), add = T, lwd = 2)
 p <- get_ud(x, 95)
 map_ud(dat, p)
 
-# more testing
+# more testing, error fixes with date time. Fuck date time
+dat <- read.csv("CollarData4133.csv")
+traj <- to_ltraj(dat)
+traj[duplicated(traj$timestamp), ]
+
+dat[c(4741, 10326), ]
+as.character(dat[10325:10327, 'timestamp'])
+as.POSIXct(dat[10325, 'timestamp'], format = '%Y-%m-%d %H:%M:%S')
+??tz
+# for some reason the as.POSIXct call isn't properly converting the datetime for area 7??
+# The timestamp error had to do with daylight savings time issues.
+
+# WORKING/TESTING KERNELBB ON MULD 
 dat <- read.csv("CollarData4133.csv")
 dat$timestamp <- as.POSIXct(dat$timestamp, format = '%Y-%m-%d %H:%M:%S')
+dat <- dat[dat$timestamp >= "2014-06-01" & dat$timestamp <= "2014-07-01", ]
+DeviceMapping(dat)
+
+traj <- to_ltraj(dat)
+liker(traj, sig2 = 60, rangesig1 = c(1, 10))
+system.time(bb <- kernelbb(traj, sig1 = 2.7027, sig2 = 40, grid = 100))
+image(bb)
+plot(getverticeshr(bb, 99), add = T, lwd = 2)
+
+ud <- get_ud(bb, 99)
+map_ud(dat, ud)
+
+movement_eda(traj[[1]], "sig.dist", color = "royalblue4")
+movement_eda(traj[[1]], "R2n", color = "royalblue4")
+movement_eda(traj[[1]], "dist", "point", color = "royalblue4")
+movement_eda(traj[[1]], "dist", "hist", "royalblue4")
+
 system.time(x <- estimate_bbmm(dat))
 image(x)
 plot(getverticeshr(x, 99), add = T, lwd = 2)
 p <- get_ud(x, 99)
 map_ud(dat, p)
+
+
+
+
+
 
 ######################
 # EDA figures in app #
@@ -569,9 +603,9 @@ movement_eda <- function(dat, plot_var, type = 'line') {
   }
   p <- p + theme(panel.background = element_rect(fill = 'white'),
            plot.background = element_rect(fill = 'white'),
-           panel.grid.major.x = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
+           panel.grid.major.x = element_line(color = 'grey75', size = .5, linetype = 'dotted'),
            panel.grid.minor.x = element_blank(),
-           panel.grid.major.y = element_line(color = 'grey75', size = 1, linetype = 'dotted'),
+           panel.grid.major.y = element_line(color = 'grey75', size = .5, linetype = 'dotted'),
            panel.grid.minor.y = element_blank(),
            axis.title.x = element_blank(),
            axis.title.y = element_text(color = 'grey50', size = 14),
@@ -589,7 +623,7 @@ grid.arrange(movement_eda(traj, "cummdist"),
              movement_eda(traj, "dist", "point"),
              movement_eda(traj, "dist", "hist"), ncol = 1)
 
-movement_eda(traj, "cummdist")
-movement_eda(traj, "R2n")
-movement_eda(traj, "dist", "point")
-movement_eda(traj, "dist", "hist")
+movement_eda(traj, "cummdist", color = "royalblue4")
+movement_eda(traj, "R2n", color = "royalblue4")
+movement_eda(traj, "dist", "point", color = "royalblue4")
+movement_eda(traj, "dist", "hist", "royalblue4")

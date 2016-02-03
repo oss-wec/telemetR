@@ -42,13 +42,19 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
 
   tabPanel("Migration",
            h2("Migration Analysis"),
-           p("A showing Net Squared Displacement (NSD), a measurement of the distance from the home range. 
-             Limit the number of animals for analysis to 20. The more animals selected the messier the plots become."),
+           p("Below are several exploratory data analysis and visualizations to help understand the collar data. 
+             The first figure is the cumulative distance traveled (sig.dis). The second figure is the net 
+             squared displacement (R2n). R2n is a measure of the distance between the first location and the current location squared ((p1, pi)^2). The method is described in Bunnefeld et al. 2011 as a method to quantify migration. 
+             The third figure is a plot of the distance travelled between each successive point. The fourth figure is a histogram of the distances moved."),
+           p("At the bottom is the map that includes every GPS collar location for the selected animal. 
+             There is an option to estimate a generalized Brownian bridge movement model. This is an estimation of the animals utilization of the landscape. The polygons represent the 95% utilization distribution.
+             Currently the Brownian bridge can only be run for on animal at a time."),
            actionButton("plotMigration", "Run Analysis"),
+           checkboxInput("run.bbmm", "Calculate BBMM", value = FALSE),
            hr(),
            plotOutput("migrationAnalysis"),
            hr(),
-           leafletOutput('allpoints', height = "800"),
+           leafletOutput('allpoints', height = "500"),
            br(),
            p("A map of every GPS fix for the selected animals. To turn animals on and off use the radio buttons on the right.
              This serves as a visual inspection of the data for erraneous locations. Further analysis is available.")

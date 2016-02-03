@@ -1,6 +1,8 @@
 library(shiny)
 library(leaflet)
 library(data.table)
+library(gridExtra)
+library(geojsonio)
 #library(DT)
 source("global.R")
 
@@ -72,16 +74,31 @@ shinyServer(function(input, output) {
   )
 
   migration_df <- eventReactive(input$plotMigration,  {
-    df <- Calculate_NSD(df_subset())
+    df <- df_subset()
     return(df)
   })
 
   output$migrationAnalysis <- renderPlot({
-    Plot_NSD(migration_df())
+    traj <- to_ltraj(migration_df())[[1]]
+    traj$cumdist <- cumsum(traj$dist)
+    grid.arrange(movement_eda(traj, "sig.dist", "line", "royalblue4"),
+                 movement_eda(traj, "R2n", "line", "royalblue4"),
+                 movement_eda(traj, "dist", "point", "royalblue4"),
+                 movement_eda(traj, "dist", "hist", "royalblue4"), ncol = 1)
   })
   
   output$allpoints <- renderLeaflet({
-    DeviceMapping(migration_df())
+    m <- DeviceMapping(migration_df())
+    if (input$run.bbmm == TRUE) {
+      traj <- to_ltraj(migration_df())
+      bb <- estimate_bbmm(traj)
+      ud <- get_ud(bb, 95)
+      ud <- geojson_json(ud)
+      m <- m %>% addGeoJSON(ud,
+                           stroke = F, color = "midnightblue", fillOpacity = .4,
+                           group = "BBMM 95%")
+    }
+    m
   })
   #new command goes here
 })

@@ -39,11 +39,13 @@ install.packages("shiny")
 install.packages("shinyjs")
 install.packages("ggplot2")
 install.packages("sp")
+install.packages("geojsonio")
+install.packages("adehabitatHR")
 ```
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
 ```r
-shiny::runGitHub("CollarDataExport", "mgritts")
+shiny::runGitHub("CollarDataExport", "mgritts", launch.browser = TRUE)
 ```
 
 Permissions for the GIS data drive (V:/ActiveProjects/Game) is required to access the data for the application.
@@ -66,15 +68,15 @@ The map can be filtered by individual by entering individual NDOW IDs in the *ND
 
 Use the reset tab to reset the input to the original values. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals. The default date range is 2010-01-01 to today's  date.
 
+### Migration Tab
+
+This tab can be used to plot several parameters related to animal movement. There are 4 figures for visualizing GPS data. These include a cumulative distance (sig.dist), net squared displacement (R2n), distance, and a histogram of distances. Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information on NSD calculations and utility.
+
+The map below shows every collar location. A BBMM 95% utilization distribution can be estimated by clicking the Run BBMM checkbox. This functionality is only supported for one animal at a time.
+
 ### Data Tab
 
 The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not only every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button, and saved to your Downloads folder. The downloaded data will include every GPS location.
-
-### Migration Tab
-
-This tab can be used to calculate Net Squared Displacement (NSD), and basic utilization distributions (TODO) overlayed on a map. Visual inspection of selected GPS data and basic analyses are available. Further development is in progress.
-
-Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information on NSD calculations and utility.
 
 ## Demo
 
