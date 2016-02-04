@@ -1,5 +1,5 @@
 # Collar Data Export
-*0.6.0*
+*0.75.0*
 
 A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
 
