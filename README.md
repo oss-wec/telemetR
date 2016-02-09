@@ -41,6 +41,7 @@ install.packages("ggplot2")
 install.packages("sp")
 install.packages("geojsonio")
 install.packages("adehabitatHR")
+install.packages("gridExtra")
 ```
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
@@ -100,7 +101,7 @@ Current version has no known bugs
 - [ ] A way for users to request analysis based on data they've entered
 - [ ] Remove erroneous points, persistent to data download
 - [x] Include migration analysis plots
-- [ ] Include utilization distributions.
+- [x] Include utilization distributions.
   - [ ] As shapefile?
 - [x] NSD plots and associated maps
 

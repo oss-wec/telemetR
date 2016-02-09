@@ -623,7 +623,51 @@ grid.arrange(movement_eda(traj, "cummdist"),
              movement_eda(traj, "dist", "point"),
              movement_eda(traj, "dist", "hist"), ncol = 1)
 
-movement_eda(traj, "cummdist", color = "royalblue4")
+movement_eda(traj, "sig.dist", color = "royalblue4")
 movement_eda(traj, "R2n", color = "royalblue4")
-movement_eda(traj, "dist", "point", color = "royalblue4")
+movement_eda(traj, "dist", "point", color = "firebrick4")
 movement_eda(traj, "dist", "hist", "royalblue4")
+
+# multiple animals for the movement figures
+dat <- read.csv("CollarData.csv")
+dat2 <- read.csv("CollarData4133.csv")
+
+traj1 <- to_ltraj(dat)[[1]]
+traj2 <- to_ltraj(dat2)[[1]]
+traj1$ndowid <- 3494
+traj2$ndowid <- 4133
+df <- rbind(traj1, traj2)
+
+movement_eda(df, 'dist', 'point', 'firebrick4')
+
+###############################################################################
+#Trying to facet result
+library(data.table)
+dat <- fread("AllCollars.csv", nrows = 100000)
+df <- dat[dat$ndowid %in% c(292, 831), ]
+
+to_ltraj <- function(dat) {
+  dat <- as.data.frame(dat)
+  dat$timestamp <- as.POSIXct(dat$timestamp, format = '%Y-%m-%d %H:%M:%S')
+#  dat <- dat[complete.cases(dat[, c("long_x", "lat_y", "timestamp")]), ] 
+#   coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
+#                                     as.numeric(dat$lat_y)),
+#                               proj4string = CRS("+proj=longlat"))
+#   coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
+#   colnames(coord_conv) <- c("Easting", "Northing")
+#  dat <- cbind(dat, coord_conv)
+#   
+#   traj <- as.ltraj(dat[, c("Easting", "Northing")], date = dat$timestamp, id = dat$ndowid)
+#   traj[[1]]$sig.dist <- cumsum(traj[[1]]$dist)
+#   return(traj)
+  return(dat)
+}
+
+traj <- to_ltraj(df)
+
+movement_eda <- function(dat, plot_var){
+  ggplot(dat, aes_string(x = 'date', y = plot_var, group = 'ndowid', color = 'ndowid')) +
+#    facet_grid(~ndowid, drop = T) +
+    geom_point()
+}
+movement_eda(df, 'R2n')
