@@ -13,9 +13,13 @@
 vignettes/*.html
 vignettes/*.pdf
 
+# folders
+data/
+figures/
+scripts/
+CollarExportApp/
+
 # data
-data
-demo.gif
 .RData
 *.csv
 *.pdf
