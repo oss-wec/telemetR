@@ -17,7 +17,6 @@ vignettes/*.pdf
 # folders
 data/
 figures/
-scripts/
 CollarExportApp/
 
 # data
