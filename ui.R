@@ -4,19 +4,31 @@ library(leaflet)
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
    tabPanel("Collared Animals", div(class = "pg1",
             fluidRow(h2("Filter Data"),
-                     column(4,
+                     column(2,
                             selectInput("species", "Species",
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
-                                        )
-                            ),
-                     column(4,
+                                        ),
                             selectInput("mgmtarea", "Management Area",
-                                        choices = 1:29,
-                                        selected = 10
+                                        choices = 1:29, selected = 19),
+                            textInput("idlist", "NDOW ID", NULL),
+                            dateRangeInput("filterdates", "Date Range:"),
+                            actionButton("clearInput", "Reset Input"),
+                            br(),
+                            br(),
+                            br(),
+                            br(),
+                            br(),
+                            br()
+                            ),
+                     column(10,
+                            leafletOutput("preview")
                             )
-                     ),
-            DT::dataTableOutput("animal.table", width = "100%", height = "auto")))
             ),
+            hr(),
+            fluidRow(h2("Collared Animals"),
+                     DT::dataTableOutput("animal.table", width = "100%", height = "auto")
+                    )
+            )),
    
    tabPanel("Map",
     div(class = "outer",

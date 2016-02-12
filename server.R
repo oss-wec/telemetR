@@ -25,6 +25,10 @@ shinyServer(function(input, output) {
                                "Inservice Date", "Outservice Date", "Fate"),
               class = "cell-border stripe")
   })
+  
+  output$preview <- renderLeaflet({ 
+      CollarMap(df_subset())
+    })
 
   # SUBSET GPS DATA BY SPECIES
   id_list <- reactive({
