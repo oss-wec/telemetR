@@ -2,7 +2,7 @@ library(shiny)
 library(leaflet)
 
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
-   tabPanel("Collared Animals",
+   tabPanel("Collared Animals", div(class = "pg1",
             fluidRow(h2("Filter Data"),
                      column(4,
                             selectInput("species", "Species",
@@ -15,8 +15,9 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                         selected = 10
                             )
                      ),
-            DT::dataTableOutput("animal.table", width = "100%", height = "auto"))),
-
+            DT::dataTableOutput("animal.table", width = "100%", height = "auto")))
+            ),
+   
    tabPanel("Map",
     div(class = "outer",
         tags$head(includeCSS("style.css")),
@@ -35,7 +36,9 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                      start = "2010-01-01",
                                      min = "2010-01-01"),
                       checkboxInput("use.date", "Use Date Range", value = FALSE),
-                      actionButton("reset", "Reset Input")
+                      actionButton("reset", "Reset Input"),
+                      hr(),
+                      htmlOutput("dataInfo")
                       )
     )
   ),
@@ -59,6 +62,22 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
            p("A map of every GPS fix for the selected animals. To turn animals on and off use the radio buttons on the right.
              This serves as a visual inspection of the data for erraneous locations. Further analysis is available.")
            ),
+  
+  tabPanel("Movement", 
+           sidebarLayout(
+             sidebarPanel(h2("Movement Analysis"),
+                          h3("Input Panel"),
+                          selectInput("fig.type", "Figure Type",
+                                      choices = c("point", "line", "histogram"),
+                                      selected = "point"),
+                          selectInput("y.input", "Y Axis", 
+                                      choices = c("dist", "R2n", "sig.dist")),
+                          actionButton("run", "Run Anlysis")),
+             mainPanel(
+               plotOutput("move.plot", width = "100%"),
+               tableOutput("move.table")
+               )
+             )),
   
   tabPanel("Data",
            h2("All GPS Data"),

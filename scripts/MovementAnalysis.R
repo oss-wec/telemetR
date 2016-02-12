@@ -50,7 +50,7 @@ movement_eda <- function(dat, plot_var, type = 'line') {
   color_pal <- c('royalblue4', 'firebrick4', 'wheat4', 'mediumorchid4', 'springgreen4')
   
   p <- ggplot(dat, aes(group = ndowid, color = factor(ndowid), fill = factor(ndowid)))
-  if(type == 'hist'){
+  if(type == 'histogram'){
     p <- p + geom_histogram(aes_string(x = plot_var))
   } else if (type == 'line'){
     p <- p + geom_line(aes_string(x = 'date', y = plot_var), size = .75)

@@ -1,6 +1,9 @@
 input[type="number"] {
   max-width: 80%;
 }
+div.pg1 {
+  margin: 10px;
+}
 
 div.outer {
   position: fixed;
@@ -40,7 +43,7 @@ h1, h2, h3, h4 { font-weight: 400; }
   position: absolute;
   bottom: 10px;
   left: 10px;
-  font-size: 12px;
+  font-size: 6px;
 }
 
 /* If not using map tiles, show a white background */

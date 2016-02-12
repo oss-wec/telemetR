@@ -6,21 +6,23 @@ library(geojsonio)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv", encoding = "UTF-8")
-dat <- fread("Collars.csv", encoding = "UTF-8")
+dat <- fread("Collars.csv", encoding = "UTF-8", nrows = 20000)
 dat_animal <- read.csv("Animals.csv")
 dat$date <- dat[, as.Date(timestamp)]
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
-  # SUBSETTING FRONT PAGE TABLE BY SPECIES AND MANAGEMENT AREA
-  # IF MULD ALLOW TO SUBSET BY MGMT AREA, MAYBE HUNT UNIT TOO. RIGHT NOW MOST RECORDS ARE MULD
+  
   output$animal.table <- DT::renderDataTable({
-    df <- dat_animal[dat_animal$spid == input$species, ]
+    df <- dat_animal[dat_animal$spid == input$species, 
+                     c(2, 1, 4, 3, 7, 8, 5)]
     if (input$species == "MULD") {
       df <- df[df$mgmtarea == input$mgmtarea, ]
     }
     DT::datatable(df, rownames = FALSE,
+                  colnames = c("Species", "NDOW ID", "Device ID", "Area",
+                               "Inservice Date", "Outservice Date", "Fate"),
               class = "cell-border stripe")
   })
 
@@ -47,7 +49,17 @@ shinyServer(function(input, output) {
     }
     return(df)
   })
-
+  
+  output$dataInfo <- renderUI({
+    HTML(
+      paste(sep = "<br/>",
+            paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
+            paste("<b>Total Points:</b> ", nrow(df_subset())),
+            paste("<b>Min. Date:</b> ", min(df_subset()$date)),
+            paste("<b>Min. Date:</b> ", max(df_subset()$date))
+            ))
+      })
+  
   output$map <- renderLeaflet({
     CollarMap(df_subset())
   })
@@ -80,6 +92,24 @@ shinyServer(function(input, output) {
                  movement_eda(traj, "R2n", "line", "royalblue4"),
                  movement_eda(traj, "dist", "point", "royalblue4"),
                  movement_eda(traj, "dist", "hist", "royalblue4"), ncol = 1)
+  })
+  
+  move_df <- eventReactive(input$run, {
+    df <- coord_conv(df_subset())
+    df[, ':=' (dist = move.dist(x, y),
+               R2n = move.r2n(x, y),
+               sig.dist = cumsum(move.dist(x, y))), by = ndowid]
+    p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
+    return(list(df, p))
+  })
+  
+  output$move.plot <- renderPlot({
+    #p <- movement_eda(move_df(), plot_var = input$y.input, type = input$fig.type)
+    move_df()[[2]]
+  })
+  
+  output$move.table <- renderTable({
+    head(move_df()[[1]])
   })
   
   output$allpoints <- renderLeaflet({

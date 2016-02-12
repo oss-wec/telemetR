@@ -124,34 +124,6 @@ to_ltraj <- function(dat) {
   return(traj)
 }
 
-movement_eda <- function(dat, plot_var, type = 'line', color) {
-  p <- ggplot(dat)
-  if(type == 'hist'){
-    p <- p + geom_histogram(aes_string(x = plot_var),
-                            fill = color)
-  } else if (type == 'line'){
-    p <- p + geom_line(aes_string(x = 'date', y = plot_var),
-                       color = color, size = .75)
-  } else if (type == 'point'){
-    p <- p + geom_point(aes_string(x = 'date', y = plot_var),
-                        color = color, size = 1.3)
-  }
-  p <- p + theme(panel.background = element_rect(fill = 'white'),
-                 plot.background = element_rect(fill = 'white'),
-                 panel.grid.major.x = element_line(color = 'grey90', size = .5),
-                 panel.grid.minor.x = element_blank(),
-                 panel.grid.major.y = element_line(color = 'grey90', size = .5),
-                 panel.grid.minor.y = element_blank(),
-                 axis.title.x = element_blank(),
-                 axis.title.y = element_text(color = 'grey50', size = 14),
-                 axis.text.x = element_text(color = 'grey50', size = 10),
-                 axis.text.y = element_text(color = 'grey50', size = 10),
-                 axis.ticks = element_blank(),
-                 strip.background = element_blank(),
-                 strip.text = element_text(color = 'grey50', size = 12))
-  return(p)
-}
-
 estimate_bbmm <- function(traj) {
   sig1 <- liker(traj, sig2 = 40, rangesig1 = c(1, 10), plotit = FALSE)
   bb <- kernelbb(traj, sig1[[1]]$sig1, 40, grid = 100)
@@ -163,4 +135,56 @@ get_ud <- function(bb, pct_ud) {
   ud@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
   ud <- spTransform(ud, CRS("+proj=longlat"))
   return(ud)
+}
+
+# MOVEMENT ANALYSIS FUNCTIONS
+coord_conv <- function(df, conversion = 'utm') {
+  df <- df[complete.cases(df[, .(long_x, lat_y)])]
+  conv <- SpatialPoints(cbind(as.numeric(df$long_x), as.numeric(df$lat_y)),
+                        proj4string = CRS('+proj=longlat'))
+  conv <- as.data.frame(spTransform(conv, CRS('+proj=utm +zone=11')))
+  colnames(conv) <- c('x', 'y')
+  df <- cbind(df, conv)
+  return(df)
+}
+
+move.dist <- function(x, y) {
+  dist <- c(0, sqrt((x[-1] - x[-length(x)])**2 + 
+                      (y[-1] - y[-length(y)])**2))
+  return(dist)
+}
+
+move.r2n <- function(x, y) {
+  r2n <- (x - x[1])**2 + (y - y[1])**2
+  return(r2n)
+}
+
+movement_eda <- function(dat, plot_var, type = 'line') {
+  color_pal <- c('royalblue4', 'firebrick4', 'wheat4', 'mediumorchid4', 'springgreen4')
+  
+  p <- ggplot(dat, aes(group = ndowid, color = factor(ndowid), fill = factor(ndowid)))
+  if(type == 'histogram'){
+    p <- p + geom_histogram(aes_string(x = plot_var))
+  } else if (type == 'line'){
+    p <- p + geom_line(aes_string(x = 'date', y = plot_var), size = .75)
+  } else if (type == 'point'){
+    p <- p + geom_point(aes_string(x = 'date', y = plot_var), size = 1.5)
+  }
+  p <- p + facet_wrap(~ndowid, scales = 'free', ncol = 1) +
+    scale_color_manual(values = color_pal) + 
+    scale_fill_manual(values = color_pal) +
+    theme(panel.background = element_rect(fill = 'white'),
+          plot.background = element_rect(fill = 'white'),
+          panel.grid.major.x = element_line(color = 'grey90', size = .5),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_line(color = 'grey90', size = .5),
+          panel.grid.minor.y = element_blank(),
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(color = 'grey50', size = 14),
+          axis.text.x = element_text(color = 'grey50', size = 10),
+          axis.text.y = element_text(color = 'grey50', size = 10),
+          axis.ticks = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(color = 'grey50', size = 12))
+  return(p)
 }
