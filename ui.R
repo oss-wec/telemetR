@@ -5,23 +5,21 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
    tabPanel("Collared Animals", div(class = "pg1",
             fluidRow(h2("Filter Data"),
                      column(2,
-                            selectInput("species", "Species",
+                            selectInput("sl_species", "Species",
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
                                         ),
-                            selectInput("mgmtarea", "Management Area",
+                            selectInput("sl_mgmtarea", "Management Area",
                                         choices = 1:29, selected = 19),
-                            textInput("idlist", "NDOW ID", NULL),
-                            dateRangeInput("filterdates", "Date Range:"),
-                            actionButton("clearInput", "Reset Input"),
-                            br(),
-                            br(),
-                            br(),
-                            br(),
-                            br(),
-                            br()
+                            textInput("tx_ndowid", "NDOW ID", NULL),
+                            checkboxInput("ck_date", "Use Date Range", value = FALSE),
+                            dateRangeInput("sl_dates", "Date Range:",
+                                           start = "2010-01-01", min = "2010-01-01"),
+                            actionButton("ac_reset", "Reset Input"),
+                            hr(),
+                            htmlOutput("dataInfo")
                             ),
                      column(10,
-                            leafletOutput("preview")
+                            leafletOutput("preview", height = 600)
                             )
             ),
             hr(),
@@ -47,10 +45,10 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       dateRangeInput("dates", "Date Range:",
                                      start = "2010-01-01",
                                      min = "2010-01-01"),
-                      checkboxInput("use.date", "Use Date Range", value = FALSE),
+                      
                       actionButton("reset", "Reset Input"),
-                      hr(),
-                      htmlOutput("dataInfo")
+                      hr()
+                      #htmlOutput("dataInfo")
                       )
     )
   ),

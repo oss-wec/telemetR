@@ -15,10 +15,10 @@ dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF
 shinyServer(function(input, output) {
   
   output$animal.table <- DT::renderDataTable({
-    df <- dat_animal[dat_animal$spid == input$species, 
+    df <- dat_animal[dat_animal$spid == input$sl_species, 
                      c(2, 1, 4, 3, 7, 8, 5)]
-    if (input$species == "MULD") {
-      df <- df[df$mgmtarea == input$mgmtarea, ]
+    if (input$sl_species == "MULD") {
+      df <- df[df$mgmtarea == input$sl_mgmtarea, ]
     }
     DT::datatable(df, rownames = FALSE,
                   colnames = c("Species", "NDOW ID", "Device ID", "Area",
@@ -32,23 +32,23 @@ shinyServer(function(input, output) {
 
   # SUBSET GPS DATA BY SPECIES
   id_list <- reactive({
-    id_list <- strsplit(input$ndowid, ", ")
+    id_list <- strsplit(input$tx_ndowid, ", ")
     id_list <- id_list[[1]]
     id_list <- as.numeric(id_list)
     return(id_list)
   })
 
   df_subset <- reactive({
-    if (is.null(input$ndowid) | input$ndowid == "") {
-      df <- dat[species == input$species, ]
-      if (input$species == "MULD") {
-        df <- df[mgmtarea == as.numeric(input$mgmtarea), ]
+    if (is.null(input$tx_ndowid) | input$tx_ndowid == "") {
+      df <- dat[species == input$sl_species, ]
+      if (input$sl_species == "MULD") {
+        df <- df[mgmtarea == input$sl_mgmtarea, ]
       }
     } else {
-      df <- dat[species == input$species &
+      df <- dat[species == input$sl_species &
                 ndowid %in% id_list(), ]
-      if (input$use.date == TRUE) {
-        df <- df[date >= input$dates[1] & date <= input$dates[2], ]
+      if (input$ck_date == TRUE) {
+        df <- df[date >= input$sl_dates[1] & date <= input$sl_dates[2], ]
       }
     }
     return(df)
@@ -60,7 +60,7 @@ shinyServer(function(input, output) {
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
             paste("<b>Min. Date:</b> ", min(df_subset()$date)),
-            paste("<b>Min. Date:</b> ", max(df_subset()$date))
+            paste("<b>Max. Date:</b> ", max(df_subset()$date))
             ))
       })
   
