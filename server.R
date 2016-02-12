@@ -6,7 +6,7 @@ library(geojsonio)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv", encoding = "UTF-8")
-dat <- fread("Collars.csv", encoding = "UTF-8", nrows = 20000)
+dat <- fread("Collars.csv", encoding = "UTF-8", nrows = 50000)
 dat_animal <- read.csv("Animals.csv")
 dat$date <- dat[, as.Date(timestamp)]
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
@@ -68,8 +68,10 @@ shinyServer(function(input, output) {
     CollarMap(df_subset())
   })
 
-  observeEvent(input$reset, {
-    shinyjs::reset("controls")
+  observeEvent(input$ac_reset, {
+    shinyjs::reset("tx_ndowid")
+    shinyjs::reset("sl_dates")
+    shinyjs::reset("ck_date")
   })
 
   output$collar.table <- DT::renderDataTable({

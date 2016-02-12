@@ -1,24 +1,29 @@
 library(shiny)
+library(shinyjs)
 library(leaflet)
 
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
-   tabPanel("Collared Animals", div(class = "pg1",
+   tabPanel("Collared Animals", useShinyjs(), div(class = "pg1",
             fluidRow(h2("Filter Data"),
-                     column(2,
+                     column(3,
                             selectInput("sl_species", "Species",
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
                                         ),
                             selectInput("sl_mgmtarea", "Management Area",
                                         choices = 1:29, selected = 19),
+                            hr(),
+                            p("The following input will further filter the individuals,
+                              dipslayed on the map. These can be reset with the Reset Input button."),
                             textInput("tx_ndowid", "NDOW ID", NULL),
                             checkboxInput("ck_date", "Use Date Range", value = FALSE),
                             dateRangeInput("sl_dates", "Date Range:",
-                                           start = "2010-01-01", min = "2010-01-01"),
+                                           start = "2010-01-01", min = "2010-01-01", 
+                                           startview = "year"),
                             actionButton("ac_reset", "Reset Input"),
                             hr(),
                             htmlOutput("dataInfo")
                             ),
-                     column(10,
+                     column(9,
                             leafletOutput("preview", height = 600)
                             )
             ),
@@ -31,25 +36,7 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
    tabPanel("Map",
     div(class = "outer",
         tags$head(includeCSS("style.css")),
-
-        leafletOutput("map", width = "100%", height = "100%"),
-
-        absolutePanel(shinyjs::useShinyjs(),
-                      id = "controls", class = "panel panel-default", fixed = TRUE,
-                      draggable = TRUE, width = 330, height = "auto",
-                      top = 110, bottom = "auto", left = "auto", right = 10,
-
-                      h2("Animal Selection"),
-
-                      textInput("ndowid", "NDOW ID:", NULL),
-                      dateRangeInput("dates", "Date Range:",
-                                     start = "2010-01-01",
-                                     min = "2010-01-01"),
-                      
-                      actionButton("reset", "Reset Input"),
-                      hr()
-                      #htmlOutput("dataInfo")
-                      )
+        leafletOutput("map", width = "100%", height = "100%")
     )
   ),
 
