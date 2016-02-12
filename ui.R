@@ -2,7 +2,10 @@ library(shiny)
 library(leaflet)
 
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
-   tabPanel("Collared Animals", div(class = "pg1",
+   tabPanel("Animal Data",
+     div(class = "pg1",
+            fluidRow(h2("Location map"),
+                     column(12, (leafletOutput("preview")))),
             fluidRow(h2("Filter Data"),
                      column(2,
                             selectInput("species", "Species",
@@ -21,7 +24,8 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                             br()
                             ),
                      column(10,
-                            leafletOutput("preview")
+                            #leafletOutput("preview")
+                            p("lorem ipsum")
                             )
             ),
             hr(),
