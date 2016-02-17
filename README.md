@@ -1,11 +1,13 @@
 # Collar Data Export
-*0.75.0*
+*0.80.0*
 
 A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
 
 ## Justification
 
-We have organized all GPS collar location data ( >1.8 million records) into a single database yet all data output is limited to custom SQL statements and Microsoft Excel line limit (65,000 rows). This application provides a user interface for interactively and visually selecting GPS location data for export.
+We have organized all GPS collar location data ( >1.8 million records) into a single database yet all data output is limited to SQL statements and Microsoft Excel line limit (65,000 rows). This application provides a user interface for interactively and visually selecting GPS location data for export.
+
+The application also provides an GUI for exploratory data analysis and visualization. Users can estimate basic home range and utilization distributions, and plots of standard movement parameters.
 
 ## Use Case
 
@@ -38,11 +40,15 @@ install.packages("data.table")
 install.packages("shiny")
 install.packages("shinyjs")
 install.packages("ggplot2")
+install.packages("lubridate")
+install.packages("dplyr")
 install.packages("sp")
 install.packages("geojsonio")
 install.packages("adehabitatHR")
 install.packages("gridExtra")
 ```
+
+I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses.
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
 ```r
@@ -61,15 +67,11 @@ The application opens with a table of animals collared with GPS collars. The tab
 
 Any field in the table can be searched using the search bar on the right. The table can be sorted by clicking the arrows next to each column name.
 
-### Map Tab
+### Spatial Tab
 
-The second page is a map plotted with the animals from the table on the Collared Animals Page. The blue dots represent the first and last GPS location of the animal. The grey line is a smoothed path (every 20 locations) between the first and last point.
+The map shows every collar location. A BBMM 95% utilization distribution can be estimated by clicking the Estimate BBMM checkbox. This functionality is only supported for one animal at a time.
 
-The map can be filtered by individual by entering individual NDOW IDs in the *NDOW ID* text box. The NDOW IDs used should be from the table on the Collared Animals Page. To enter more than one use a comma to separate NDOW IDs (ex: 831, 3669). To further filter the plot enter a *Date Range* and click the *Use Date Range* checkbox. This will only include points between the two dates.
-
-Use the reset tab to reset the input to the original values. If changing species or management area on the collared animals page, the data on the Map page will need to be reset in order to view all the animals. The default date range is 2010-01-01 to today's  date.
-
-### Migration Tab
+### Movement Tab
 
 This tab can be used to plot several parameters related to animal movement. There are 4 figures for visualizing GPS data. These include a cumulative distance (sig.dist), net squared displacement (R2n), distance, and a histogram of distances. Refer to [Bunnefeld et al. 2010](http://onlinelibrary.wiley.com/doi/10.1111/j.1365-2656.2010.01776.x/full) for more information on NSD calculations and utility.
 
@@ -77,7 +79,7 @@ The map below shows every collar location. A BBMM 95% utilization distribution c
 
 ### Data Tab
 
-The third page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not only every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button, and saved to your Downloads folder. The downloaded data will include every GPS location.
+The fourth page shows all the GPS data for individuals displayed on the map. This includes every GPS fix (not only every 20 as mapped) for the species, management area (for deer), NDOW ID, and date range selected. This data can be downloaded as a .CSV file by clicking the *Download Data* button, and saved to your Downloads folder. The downloaded data will include every GPS location.
 
 ## Demo
 
