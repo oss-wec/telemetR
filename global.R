@@ -1,8 +1,8 @@
-library(data.table)
-library(leaflet)
-library(ggplot2)
-library(sp)
-library(adehabitatHR)
+# library(data.table)
+# library(leaflet)
+# library(ggplot2)
+# library(sp)
+# library(adehabitatHR)
 
 CollarMap <- function(dataframe) {
   df <- as.data.table(dataframe)
@@ -111,16 +111,15 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
 to_ltraj <- function(dat) {
   dat <- as.data.frame(dat)
   dat$timestamp <- as.POSIXct(dat$timestamp, format = '%Y-%m-%d %H:%M:%S')
-  dat <- dat[complete.cases(dat[, c("long_x", "lat_y", "timestamp")]), ] 
-  coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
-                                    as.numeric(dat$lat_y)),
-                              proj4string = CRS("+proj=longlat"))
-  coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
-  colnames(coord_conv) <- c("Easting", "Northing")
-  dat <- cbind(dat, coord_conv)
+  dat <- dat[complete.cases(dat[, c("x", "y", "timestamp")]), ] 
+  # coord_conv <- SpatialPoints(cbind(as.numeric(dat$long_x),
+  #                                   as.numeric(dat$lat_y)),
+  #                             proj4string = CRS("+proj=longlat"))
+  # coord_conv <- as.data.frame(spTransform(coord_conv, CRS("+proj=utm +zone=11")))
+  # colnames(coord_conv) <- c("Easting", "Northing")
+  # dat <- cbind(dat, coord_conv)
   
-  traj <- as.ltraj(dat[, c("Easting", "Northing")], date = dat$timestamp, id = dat$ndowid)
-  traj[[1]]$sig.dist <- cumsum(traj[[1]]$dist)
+  traj <- as.ltraj(dat[, c("x", "y")], date = dat$timestamp, id = dat$ndowid)
   return(traj)
 }
 
@@ -157,6 +156,17 @@ move.dist <- function(x, y) {
 move.r2n <- function(x, y) {
   r2n <- (x - x[1])**2 + (y - y[1])**2
   return(r2n)
+}
+
+move.dt <- function(time) {
+  time <- as.POSIXct(time, format = "%Y-%m-%d %H:%M:%S")
+  dt <- c(0, unclass(time[-1]) - unclass(time[-length(time)]))
+  return(dt)
+}
+
+move.speed <- function(dist, time) {
+  speed <- (dist / 1000) / (time / 3600)
+  return(speed)
 }
 
 movement_eda <- function(dat, plot_var, type = 'line') {

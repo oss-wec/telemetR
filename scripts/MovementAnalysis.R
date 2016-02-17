@@ -1,9 +1,13 @@
-###############################################################################
-#                     descriptive parameters for figures                      #
-###############################################################################
 library(data.table)
 library(ggplot2)
 library(sp)
+library(lubridate)
+library(dplyr)
+library(viridis)
+library(ggthemes)
+###############################################################################
+#                     descriptive parameters for figures                      #
+###############################################################################
 dat <- fread("Collars.csv", nrows = 100000)
 df <- dat[dat$ndowid == 292, ]
 df <- dat[dat$ndowid %in% c(292, 831), ]
@@ -29,10 +33,31 @@ move.r2n <- function(x, y) {
   return(r2n)
 }
 
+move.dt <- function(time) {
+  time <- as.POSIXct(time, format = "%Y-%m-%d %H:%M:%S")
+  dt <- c(0, unclass(time[-1]) - unclass(time[-length(time)]))
+  return(dt)
+}
+# move.dt(df$timestamp)[25]
+# unclass(move.dt(df$timestamp)[1]) - unclass(move.dt(df$timestamp)[2])
+# class(df$timestamp[2])
+
+move.speed <- function(dist, time) {
+  speed <- (dist / 1000) / (time / 3600)
+  return(speed)
+}
+
+
+
 df <- coord_conv(df)
 df[, dist := move.dist(x, y), by = ndowid]
 df[, sig.dist := cumsum(dist), by = ndowid]
 df[, R2n := move.r2n(x, y), by = ndowid]
+df[, dt := move.dt(timestamp), by = ndowid]
+df[, speed := move.speed(dist, dt), by = ndowid]
+df[, hr := hour(timestamp), by = ndowid]
+df[, mth := month(timestamp), by = ndowid]
+df[, d.mth := days_in_month(timestamp), by = ndowid]
 d <- df
 
 # grouping the functions in one data.table call
@@ -89,15 +114,104 @@ movement_eda(dat = df[df$ndowid == 831], plot_var = 'dist', color = 'springgreen
 movement_eda(df, 'dist', 'point')
 
 ###############################################################################
-#                             Testing with 5 animals                          #
+#                           Testing with 5 animals                            #
 ###############################################################################
 df <- dat[dat$ndowid %in% c(292, 831, 898, 900, 906), ]
+df <- dat[dat$ndowid == 292, ]
 df <- coord_conv(df)
 df[, ':=' (dist = move.dist(x, y),
            R2n = move.r2n(x, y),
            sig.dist = cumsum(move.dist(x, y))), by = ndowid]
+
+dist <- move.dist(df$x, df$y)
+df[, ':=' (dist = move.dist(x, y),
+           R2n = move.r2n(x, y),
+           sig.dist = cumsum(move.dist(x, y))), by = ndowid]
+
 df[, date := as.Date(timestamp)]
 str(df)
 
+p <- movement_eda(df, 'dist', 'histogram')
+p + scale_x_sqrt()
 grid.arrange(movement_eda(df, 'R2n', 'line'), 
   movement_eda(df, 'dist', 'point'), ncol = 2)
+
+###############################################################################
+#                                 Heatmap                                     #
+###############################################################################
+dat <- fread("Collars.csv", nrows = 100000)
+unique(dat$ndowid)
+df <- dat
+df <- dat[dat$ndowid == 900, ]
+nrow(df)
+df <- coord_conv(df)
+df[, ':=' (dist = move.dist(x, y),
+           mth = month(timestamp, label = T, abbr = T),
+           hr = hour(timestamp)),
+           by = ndowid]
+str(df)
+df <- as.data.frame(d)
+df <- df %>% 
+  group_by(mth, hr) %>% 
+  summarize(m.dist = mean(dist),
+            t.dist = sum(dist),
+            sd.dist = sd(dist))
+
+ggplot(df, aes(x = hr, y = mth, fill = m.dist)) +
+  geom_tile(color = 'white', size = .1) +
+  scale_fill_viridis() +
+  scale_x_continuous(breaks = seq(0, 23, 4)) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )
+  
+ggplot(df, aes(x = hr, y = mth, fill = sd.dist)) +
+  geom_tile(color = 'white', size = .1) +
+  scale_fill_viridis() +
+  scale_x_continuous(breaks = seq(0, 23, 4)) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )  
+
+###############################################################################
+# BOXPLOT
+###############################################################################
+dat <- fread("Collars.csv")
+dat <- fread("Collars.csv", nrows = 100000)
+unique(dat$ndowid)
+df <- dat[dat$ndowid == 2594, ]
+df <- dat[dat$ndowid == 900, ]
+df <- coord_conv(df)
+df[, ':=' (dist = move.dist(x, y),
+           mth = month(timestamp, label = T, abbr = T),
+           hr = hour(timestamp)),
+   by = ndowid]
+str(df)
+df <- as.data.frame(df)
+df <- df %>% 
+  group_by(hr) %>% 
+  summarize(m.dist = mean(dist),
+            t.dist = sum(dist),
+            sd.dist = sd(dist))
+
+d <- d[speed <= 20]
+
+ggplot(df, aes(x = hr, y = log(dist), group = hr)) +
+  geom_boxplot(outlier.shape = 95) +
+  theme_tufte()
+
+ggplot(d, aes(x = hr, y = sqrt(speed), group = hr)) +
+  geom_boxplot(outlier.shape = 95) +
+  facet_wrap(~mth) +
+  theme_tufte()
+
+ggplot(d, aes(x = sqrt(speed))) + geom_histogram()
+summary(d$speed)
+
+ggplot(d, aes(x = dt, y = speed)) + geom_point()

@@ -3,7 +3,8 @@ library(shinyjs)
 library(leaflet)
 
 shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
-   tabPanel("Collared Animals", useShinyjs(), div(class = "pg1",
+# PAGE 1, SUBSET DATA   
+    tabPanel("Collared Animals", useShinyjs(), div(class = "pg1",
             fluidRow(h2("Filter Data"),
                      column(3,
                             selectInput("sl_species", "Species",
@@ -32,34 +33,25 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                      DT::dataTableOutput("animal.table", width = "100%", height = "auto")
                     )
             )),
-   
-   tabPanel("Map",
-    div(class = "outer",
+
+# PAGE 2, SPATIAL ANALYSIS   
+   tabPanel("Spatial",
+    div(class = "outer", tags$head(includeCSS("style.css")),
         tags$head(includeCSS("style.css")),
-        leafletOutput("map", width = "100%", height = "100%")
+        leafletOutput("map", width = "100%", height = "100%"),
+        absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
+                      width = 330, height = 600, top = "110", bottom = "auto", 
+                      left = 10, right = "auto",
+                      h2("Spatial Analysis"),
+                      p("Select inputs for spatial analysis."),
+                      checkboxInput("ck_AllPoints", "Use All Points?", value = FALSE),
+                      checkboxInput("ck_BBMM", "Estimate BBMM?", value = FALSE),
+                      actionButton("ac_UpdateMap", "Update Map")
+                      )
     )
   ),
 
-  tabPanel("Migration",
-           h2("Migration Analysis"),
-           p("Below are several exploratory data analysis and visualizations to help understand the collar data. 
-             The first figure is the cumulative distance traveled (sig.dis). The second figure is the net 
-             squared displacement (R2n). R2n is a measure of the distance between the first location and the current location squared ((p1, pi)^2). The method is described in Bunnefeld et al. 2011 as a method to quantify migration. 
-             The third figure is a plot of the distance travelled between each successive point. The fourth figure is a histogram of the distances moved."),
-           p("At the bottom is the map that includes every GPS collar location for the selected animal. 
-             There is an option to estimate a generalized Brownian bridge movement model. This is an estimation of the animals utilization of the landscape. The polygons represent the 95% utilization distribution.
-             Currently the Brownian bridge can only be run for on animal at a time."),
-           actionButton("plotMigration", "Run Analysis"),
-           checkboxInput("run.bbmm", "Calculate BBMM", value = FALSE),
-           hr(),
-           plotOutput("migrationAnalysis"),
-           hr(),
-           leafletOutput('allpoints', height = "500"),
-           br(),
-           p("A map of every GPS fix for the selected animals. To turn animals on and off use the radio buttons on the right.
-             This serves as a visual inspection of the data for erraneous locations. Further analysis is available.")
-           ),
-  
+# PAGE 3, MOVEMENT ANALYSIS  
   tabPanel("Movement", 
            sidebarLayout(
              sidebarPanel(h2("Movement Analysis"),
@@ -68,14 +60,15 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                       choices = c("point", "line", "histogram"),
                                       selected = "point"),
                           selectInput("y.input", "Y Axis", 
-                                      choices = c("dist", "R2n", "sig.dist")),
-                          actionButton("run", "Run Anlysis")),
+                                      choices = c("dist", "R2n", "sig.dist", "speed", "dt")),
+                          actionButton("ac_RunAnalysis", "Run Anlysis")),
              mainPanel(
                plotOutput("move.plot", width = "100%"),
                tableOutput("move.table")
                )
              )),
-  
+
+# PAGE 4, DATA EXPORT  
   tabPanel("Data",
            h2("All GPS Data"),
            p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),

@@ -3,17 +3,22 @@ library(leaflet)
 library(data.table)
 library(gridExtra)
 library(geojsonio)
+library(lubridate)
+library(ggplot2)
+library(sp)
+library(adehabitatHR)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv", encoding = "UTF-8")
-dat <- fread("Collars.csv", encoding = "UTF-8", nrows = 50000)
+dat <- fread("Collars.csv", encoding = "UTF-8", nrow = 100000)
 dat_animal <- read.csv("Animals.csv")
 dat$date <- dat[, as.Date(timestamp)]
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
-  
+
+  # PAGE 1 LOGIC
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal[dat_animal$spid == input$sl_species, 
                      c(2, 1, 4, 3, 7, 8, 5)]
@@ -26,18 +31,20 @@ shinyServer(function(input, output) {
               class = "cell-border stripe")
   })
   
+  # PREVIEW MAP, EVERY 20 LOCATIONS
   output$preview <- renderLeaflet({ 
       CollarMap(df_subset())
     })
 
-  # SUBSET GPS DATA BY SPECIES
+  # LIST OF NDOW IDS TO SUBSET DATAFRAME
   id_list <- reactive({
     id_list <- strsplit(input$tx_ndowid, ", ")
     id_list <- id_list[[1]]
     id_list <- as.numeric(id_list)
     return(id_list)
   })
-
+  
+  # DATAFRAME SUBSET BY SELECTED SPECIES, MGMT AREA, ID, DATE
   df_subset <- reactive({
     if (is.null(input$tx_ndowid) | input$tx_ndowid == "") {
       df <- dat[species == input$sl_species, ]
@@ -54,6 +61,7 @@ shinyServer(function(input, output) {
     return(df)
   })
   
+  # OUTPUT INFO FOR ANIMALS SELECTED IN MAP
   output$dataInfo <- renderUI({
     HTML(
       paste(sep = "<br/>",
@@ -64,71 +72,73 @@ shinyServer(function(input, output) {
             ))
       })
   
-  output$map <- renderLeaflet({
-    CollarMap(df_subset())
-  })
-
+  # PAGE 1, CLEAR INPUT
   observeEvent(input$ac_reset, {
     shinyjs::reset("tx_ndowid")
     shinyjs::reset("sl_dates")
     shinyjs::reset("ck_date")
   })
-
-  output$collar.table <- DT::renderDataTable({
-    DT::datatable(df_subset(), rownames = FALSE,
-              class = "cell-border stripe")
+  
+# PAGE 2 LOGIC, SPATIAL ANALYSIS
+  # CREATE DATAFRAME WITH MOVEMENT PARAMETERS
+  move_df <- eventReactive(input$ac_UpdateMap, {
+    df <- coord_conv(df_subset())
+    df[, ':=' (dist = move.dist(x, y),
+               R2n = move.r2n(x, y),
+               mth = month(timestamp),
+               hr = hour(timestamp),
+               dt = move.dt(timestamp)), by = ndowid]
+    df[, ':=' (sig.dist = cumsum(dist),
+               speed = move.speed(dist, dt)), by = ndowid]
+    p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
+    #return(list(df, p))
+    return(df)
   })
-
+  
+  # PAGE 2 MAP, EVERY POINT
+  pg2map <- eventReactive(input$ac_UpdateMap, {
+    if (input$ck_AllPoints == TRUE) {
+      m <- DeviceMapping(df_subset())
+    } else {
+      m <- CollarMap(df_subset())
+    }
+    if (input$ck_BBMM == TRUE) {
+      traj <- to_ltraj(move_df())
+      bb <- estimate_bbmm(traj)
+      ud <- get_ud(bb, 90)
+      ud <- geojson_json(ud)
+      m <- m %>% addGeoJSON(ud, stroke = F, color = "midnightblue", fillOpacity = .4,
+                            group = "BBMM 95%")
+    }
+    return(m)
+  })
+  
+  # MAP OUTPUT
+  output$map <- renderLeaflet({
+    pg2map()
+  })
+  
+# PAGE 3, MOVEMENT ANALYSIS
+  move_plots <- eventReactive(input$ac_RunAnalysis, {
+    p <- movement_eda(move_df(), plot_var = input$y.input, type = input$fig.type)
+    return(p)
+  })
+  output$move.plot <- renderPlot({
+    move_plots()
+  })
+  
+  # PAGE 4
+  # ALL DATA OUTPUT BUTTON
+  output$collar.table <- DT::renderDataTable({
+    DT::datatable(move_df(), rownames = FALSE,
+                  class = "cell-border stripe")
+  })
+  
+  # DOWNLOAD DATA BUTTON
   output$downloadData <- downloadHandler(
     filename = function() {paste("CollarData", ".csv", sep = "")},
     content = function(file) {
       write.csv(df_subset(), file)
     }
   )
-
-  migration_df <- eventReactive(input$plotMigration,  {
-    df <- df_subset()
-    return(df)
-  })
-
-  output$migrationAnalysis <- renderPlot({
-    traj <- to_ltraj(migration_df())[[1]]
-    traj$cumdist <- cumsum(traj$dist)
-    grid.arrange(movement_eda(traj, "sig.dist", "line", "royalblue4"),
-                 movement_eda(traj, "R2n", "line", "royalblue4"),
-                 movement_eda(traj, "dist", "point", "royalblue4"),
-                 movement_eda(traj, "dist", "hist", "royalblue4"), ncol = 1)
-  })
-  
-  move_df <- eventReactive(input$run, {
-    df <- coord_conv(df_subset())
-    df[, ':=' (dist = move.dist(x, y),
-               R2n = move.r2n(x, y),
-               sig.dist = cumsum(move.dist(x, y))), by = ndowid]
-    p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
-    return(list(df, p))
-  })
-  
-  output$move.plot <- renderPlot({
-    #p <- movement_eda(move_df(), plot_var = input$y.input, type = input$fig.type)
-    move_df()[[2]]
-  })
-  
-  output$move.table <- renderTable({
-    head(move_df()[[1]])
-  })
-  
-  output$allpoints <- renderLeaflet({
-    m <- DeviceMapping(migration_df())
-    if (input$run.bbmm == TRUE) {
-      traj <- to_ltraj(migration_df())
-      bb <- estimate_bbmm(traj)
-      ud <- get_ud(bb, 95)
-      ud <- geojson_json(ud)
-      m <- m %>% addGeoJSON(ud,
-                           stroke = F, color = "midnightblue", fillOpacity = .4,
-                           group = "BBMM 95%")
-    }
-    m
-  })
 })
