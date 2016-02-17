@@ -9,11 +9,11 @@ library(sp)
 library(adehabitatHR)
 source("global.R")
 
-#dat <- fread("V:/ActiveProjects/Game/BGDB/AllCollars.csv", encoding = "UTF-8")
-dat <- fread("Collars.csv", encoding = "UTF-8", nrow = 100000)
-dat_animal <- read.csv("Animals.csv")
+dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
+dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
+#dat <- fread("Collars.csv", encoding = "UTF-8", nrow = 1000000)
+#dat_animal <- read.csv("Animals.csv")
 dat$date <- dat[, as.Date(timestamp)]
-#dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
