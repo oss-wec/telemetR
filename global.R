@@ -75,8 +75,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
   pal <- ggthemes::gdocs_pal()(20)
   
   device.map <- leaflet() %>% 
-    addProviderTiles(basemap, group = "topo") %>% 
-    addProviderTiles("MapQuestOpen.Aerial", group = "satelite")
+    addProviderTiles(basemap)
   layer.group <- list()
   
   for(i in 1:length(unique.id)) {
@@ -102,9 +101,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
     )
     layer.group <- c(layer.group, as.character(unique.id[i]))
   } 
-  device.map <- addLayersControl(device.map,
-                                 baseGroup = c("topo", "satellite"),
-                                 overlayGroups = layer.group)
+  device.map <- addLayersControl(device.map, overlayGroups = layer.group)
   return(device.map)
 }
 

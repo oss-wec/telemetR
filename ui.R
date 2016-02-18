@@ -44,8 +44,11 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       left = 10, right = "auto",
                       h2("Spatial Analysis"),
                       p("Select inputs for spatial analysis."),
-                      checkboxInput("ck_AllPoints", "Use All Points?", value = FALSE),
-                      checkboxInput("ck_BBMM", "Estimate BBMM?", value = FALSE),
+                      radioButtons('rd_nPoints', 'Path Smoothing', choices = c('Smooth', 'All Points'),
+                                   selected = 'Smooth', inline = TRUE),
+                      selectizeInput("sl_HomeRange", "Homerange Estimation Method",
+                                     choices = c('Select Method', "Minimum Convex Polygon", "Kernel Density", "Brownian Bridge"),
+                                     selected = 'Select Method'),
                       actionButton("ac_UpdateMap", "Update Map")
                       )
     )

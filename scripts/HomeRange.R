@@ -83,3 +83,49 @@ leaflet() %>% addProviderTiles('Esri.WorldTopoMap') %>%
                    stroke = F, radius = 3, fillOpacity = .75) %>% 
   addGeoJSON(ud90)
 
+# I want to display multiple contours at once, how do I do this?
+# using the data from above...merging spatial dataframes
+
+ud90 <- get_ud(ndow.kd, 90)
+ud70 <- get_ud(ndow.kd, 70)
+ud50 <- get_ud(ndow.kd, 50)
+
+conts <- geojson_list(get_ud(ndow.kd, 90)) + geojson_list(get_ud(ndow.kd, 70)) + 
+  geojson_list(get_ud(ndow.kd, 50))
+
+hr <- geojson_json(geojson_list(get_ud(ndow.kd, 90)) + 
+                     geojson_list(get_ud(ndow.kd, 70)) + 
+                     geojson_list(get_ud(ndow.kd, 50)))
+
+leaflet() %>% addProviderTiles('Esri.WorldTopoMap') %>% 
+  addCircleMarkers(lat = ndow$lat_y, lng = ndow$long_x, 
+                   stroke = F, radius = 3, fillOpacity = .75) %>% 
+  addGeoJSON(hr, stroke = T, weight = 1, fillOpacity = .3, smoothFactor = 2)
+
+# BROWNIAN BRIDGE
+## ndow data
+ndow <- fread("data/CollarData3494.csv")
+ndow <- coord_conv(ndow)
+traj <- to_ltraj(ndow)
+bb <- estimate_bbmm(traj)
+
+ud90 <- get_ud(bb, 90)
+ud70 <- get_ud(bb, 70)
+ud50 <- get_ud(bb, 50)
+
+gj90 <- geojson_list(ud90)
+gj70 <- geojson_list(ud70)
+gj50 <- geojson_list(ud50)
+hr <- geojson_json(gj90 + gj70 + gj50)
+
+pal <- ggthemes::gdocs_pal()(10)
+
+leaflet() %>% addProviderTiles('Esri.WorldTopoMap') %>% 
+  addCircleMarkers(lat = ndow$lat_y, lng = ndow$long_x, color = pal[1],
+                   stroke = F, radius = 3, fillOpacity = .75, group = 'points') %>% 
+  addGeoJSON(hr, color = pal[1], stroke = T, weight = 1, fillOpacity = .3, 
+             smoothFactor = 1, group = 'hr') %>% 
+  addLayersControl(
+    overlayGroups = c('points', 'homerange'),
+    options = layersControlOptions(collapsed = F))
+

@@ -9,10 +9,10 @@ library(sp)
 library(adehabitatHR)
 source("global.R")
 
-dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
-dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-#dat <- fread("Collars.csv", encoding = "UTF-8", nrow = 1000000)
-#dat_animal <- read.csv("Animals.csv")
+#dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
+#dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
+dat <- fread("Collars.csv", encoding = "UTF-8", nrow = 10000)
+dat_animal <- read.csv("Animals.csv")
 dat$date <- dat[, as.Date(timestamp)]
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
@@ -96,26 +96,39 @@ shinyServer(function(input, output) {
   })
   
   # PAGE 2 MAP, EVERY POINT
-  pg2map <- eventReactive(input$ac_UpdateMap, {
-    if (input$ck_AllPoints == TRUE) {
-      m <- DeviceMapping(df_subset())
+  hr_ud <- eventReactive(input$ac_UpdateMap, {
+    if (input$rd_nPoints == 'Smooth') {
+      hr_map <- CollarMap(df_subset())
     } else {
-      m <- CollarMap(df_subset())
+      hr_map <- DeviceMapping(df_subset())
     }
-    if (input$ck_BBMM == TRUE) {
-      traj <- to_ltraj(move_df())
-      bb <- estimate_bbmm(traj)
-      ud <- get_ud(bb, 90)
-      ud <- geojson_json(ud)
-      m <- m %>% addGeoJSON(ud, stroke = F, color = "midnightblue", fillOpacity = .4,
-                            group = "BBMM 95%")
+    
+    if (input$sl_HomeRange == 'Minimum Convex Polygon') {
+      cp <- SpatialPoints(move_df()[, .(x, y)], CRS('+proj=utm +zone=11'))
+      cp <- mcp(cp, percent = 90)
+      cp <- spTransform(cp, CRS('+proj=longlat'))
+      hr <- geojson_json(cp)
+    } else if (input$sl_HomeRange == 'Kernel Density') {
+      kd <- SpatialPoints(move_df()[, .(x, y)], CRS('+proj=utm +zone=11'))
+      kd <- kernelUD(kd, h = 'href')
+      hr <- geojson_json(geojson_list(get_ud(kd, 90)) + 
+                           geojson_list(get_ud(kd, 70)) + 
+                           geojson_list(get_ud(kd, 50)))
+    } else if (input$sl_HomeRange == 'Brownian Bridge') {
+      bb <- to_ltraj(move_df())
+      bb <- estimate_bbmm(bb)
+      hr <- geojson_json(geojson_list(get_ud(bb, 90)) +
+                          geojson_list(get_ud(bb, 70)) +
+                          geojson_list(get_ud(bb, 50)))
     }
-    return(m)
+    hr_map <- hr_map %>% addGeoJSON(hr, stroke = TRUE, weight = 1, color = '#3366CC',
+                                    fillOpacity = .3, smoothFactor = 2)
+    return(hr_map)
   })
   
   # MAP OUTPUT
   output$map <- renderLeaflet({
-    pg2map()
+    hr_ud()
   })
   
 # PAGE 3, MOVEMENT ANALYSIS
