@@ -1,0 +1,17 @@
+---
+title: "Spatial Analysis, Animal Movement"
+author: "Mitchell Gritts"
+date: "February 17, 2016"
+output: html_document
+---
+
+Loading required packages. 
+
+```{r}
+library(adehabitatHR)
+library(leaflet)
+library(sp)
+library(data.table)
+library(geojsonio)
+```
+
