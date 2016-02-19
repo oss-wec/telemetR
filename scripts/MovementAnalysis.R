@@ -5,9 +5,9 @@ library(lubridate)
 library(dplyr)
 library(viridis)
 library(ggthemes)
-###############################################################################
-#                     descriptive parameters for figures                      #
-###############################################################################
+#########################################################
+# MOVEMENT PARAMETERS CALCULATIONS                      #
+#########################################################
 dat <- fread("Collars.csv", nrows = 100000)
 df <- dat[dat$ndowid == 292, ]
 df <- dat[dat$ndowid %in% c(292, 831), ]
@@ -47,8 +47,6 @@ move.speed <- function(dist, time) {
   return(speed)
 }
 
-
-
 df <- coord_conv(df)
 df[, dist := move.dist(x, y), by = ndowid]
 df[, sig.dist := cumsum(dist), by = ndowid]
@@ -57,7 +55,7 @@ df[, dt := move.dt(timestamp), by = ndowid]
 df[, speed := move.speed(dist, dt), by = ndowid]
 df[, hr := hour(timestamp), by = ndowid]
 df[, mth := month(timestamp), by = ndowid]
-df[, d.mth := days_in_month(timestamp), by = ndowid]
+df[, d.mth := days(timestamp), by = ndowid]
 d <- df
 
 # grouping the functions in one data.table call
@@ -67,6 +65,30 @@ df[, ':=' (dist = move.dist(x, y),
            sig.dist = cumsum(move.dist(x, y))), by = ndowid]
 df[, date := as.Date(timestamp)]
 d <- df
+
+## ESTIMATING CHANGE IN NSD TO PINPOINT DATES OF LARGE MOVEMENTS
+dR2n <- c(df$R2n[-length(df$R2n)] - df$R2n[-1], 0)
+sR2n <- dR2n / sd(dR2n)
+d[, d.R2n  := dR2n]
+d[, s.R2n := sR2n]
+d$timestamp <- as.POSIXct(d$timestamp)
+ggplot(d, aes(timestamp, d.R2n)) + geom_point()
+ggplot(d, aes(s.R2n)) + geom_histogram() 
+  geom_vline(xintercept = c(s, -s, s*2, -s*2, s*3, -s*3, s*4, -s*4, s*5, -s*5, s*6, -s*6))
+s <- sd(d$d.R2n)
+ggplot(d, aes(timestamp, R2n)) + geom_line()
+
+mgrt <- d[s.R2n < -6 | s.R2n > 6, ] 
+
+ggplot() + geom_line(dat = d, aes(x = timestamp, y = R2n)) +
+  geom_vline(xintercept = c(unclass(mgrt$timestamp)))
+
+mgrt$timestamp <- unclass(mgrt$timestamp)
+
+ggplot() + #geom_line(dat = d, aes(x = timestamp, y = R2n)) +  
+  geom_point(mgrt, aes(x = timestamp, y = R2n))  
+  
+class(mgrt$timestamp)
 
 ###############################################################################
 #                   Movement Figures for Muliple Collars                      #
@@ -179,9 +201,9 @@ ggplot(df, aes(x = hr, y = mth, fill = sd.dist)) +
     panel.border = element_blank()
   )  
 
-###############################################################################
-# BOXPLOT
-###############################################################################
+####################
+# BOXPLOT BY HOURS #
+####################
 dat <- fread("Collars.csv")
 dat <- fread("Collars.csv", nrows = 100000)
 unique(dat$ndowid)
