@@ -1,19 +1,21 @@
 library(shiny, verbose = TRUE)
 library(leaflet, verbose = TRUE)
 library(data.table, verbose = TRUE)
-library(gridExtra, verbose = TRUE)
-library(geojsonio, verbose = TRUE)
-library(lubridate, verbose = TRUE)
-library(ggplot2, verbose = TRUE)
-library(sp, verbose = TRUE)
-library(adehabitatHR, verbose = TRUE)
+library(gridExtra, verbose = FALSE)
+library(geojsonio, verbose = FALSE)
+library(lubridate, verbose = FALSE)
+library(ggplot2, verbose = FALSE)
+library(sp, verbose = FALSE)
+library(adehabitatHR, verbose = FALSE)
+library(fasttime, verbose = FALSE)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-dat <- fread("Collars.csv", encoding = "UTF-8", nrows = 10000)
+dat <- fread("Collars.csv", encoding = "UTF-8")
 dat_animal <- read.csv("Animals.csv")
-dat$date <- dat[, as.Date(timestamp)]
+dat$timestamp <- dat[, fastPOSIXct(timestamp)]
+
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
@@ -55,7 +57,8 @@ shinyServer(function(input, output) {
       df <- dat[species == input$sl_species &
                 ndowid %in% id_list(), ]
       if (input$ck_date == TRUE) {
-        df <- df[date >= input$sl_dates[1] & date <= input$sl_dates[2], ]
+        df <- df[timestamp >= as.POSIXct(input$sl_dates[1]) & 
+                 timestamp <= as.POSIXct(input$sl_dates[2]), ]
       }
     }
     return(df)
@@ -67,8 +70,8 @@ shinyServer(function(input, output) {
       paste(sep = "<br/>",
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
-            paste("<b>Min. Date:</b> ", min(df_subset()$date)),
-            paste("<b>Max. Date:</b> ", max(df_subset()$date))
+            paste("<b>Min. Date:</b> ", min(df_subset()$timestamp)),
+            paste("<b>Max. Date:</b> ", max(df_subset()$timestamp))
             ))
       })
   

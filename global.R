@@ -156,7 +156,9 @@ move.r2n <- function(x, y) {
 }
 
 move.dt <- function(time) {
-  time <- as.POSIXct(time, format = "%Y-%m-%d %H:%M:%S")
+  if (class(time[1]) != 'POSIXct') {
+    time <- fastPOSIXct(time)
+  }
   dt <- c(0, unclass(time[-1]) - unclass(time[-length(time)]))
   return(dt)
 }
@@ -173,9 +175,9 @@ movement_eda <- function(dat, plot_var, type = 'line') {
   if(type == 'histogram'){
     p <- p + geom_histogram(aes_string(x = plot_var))
   } else if (type == 'line'){
-    p <- p + geom_line(aes_string(x = 'date', y = plot_var), size = .75)
+    p <- p + geom_line(aes_string(x = 'timestamp', y = plot_var), size = .75)
   } else if (type == 'point'){
-    p <- p + geom_point(aes_string(x = 'date', y = plot_var), size = 1.5)
+    p <- p + geom_point(aes_string(x = 'timestamp', y = plot_var), size = 1.5)
   }
   p <- p + facet_wrap(~ndowid, scales = 'free', ncol = 1) +
     scale_color_manual(values = color_pal) + 

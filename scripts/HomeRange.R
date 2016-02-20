@@ -129,3 +129,53 @@ leaflet() %>% addProviderTiles('Esri.WorldTopoMap') %>%
     overlayGroups = c('points', 'homerange'),
     options = layersControlOptions(collapsed = F))
 
+#####################################################################
+# EXPANDING FUNCTIONALITY TO INCLUDE MORE THAN ONE ANIMAL AT A TIME #
+#####################################################################
+
+dat <- fread('Collars.csv')
+dat$timestamp <- fastPOSIXct(dat$timestamp)
+df <- dat[ndowid %in% c(1135, 1136), ]
+
+## estimating kernel density for two animals
+coordinates(df) <- df[, .(long_x, lat_y)]  #converting to SPDF
+kd <- kernelUD(df[, 2])
+image(kd)
+vd <- getvolumeUD(kd)
+image(vd[[1]])
+contour(vd[[1]], add = T)
+image(vd[[2]])
+contour(vd[[2]], add = T)
+
+## encapsulating
+df <- dat[ndowid == 1135, ]
+coordinates(df) <- df[, .(long_x, lat_y)]
+df@proj4string <- CRS('+proj=longlat')
+#df <- spTransform(df, CRS('+proj=utm +zone=11'))
+kd <- kernelUD(df[, 2])
+image(kd)
+x <- getverticeshr(kd, 99)
+plot(x[[1]], add = T)
+
+get_ud <- function(ud, percent) {
+  ud1 <- getverticeshr(ud, percent[2])
+}
+x <- get_ud(kd, c(90, 99))
+
+## function to return multiple UD contours for one UD
+get_ud <- function(ud, percent) {
+  ud_list <- list(length(percent))
+  for (i in seq_along(percent)) {
+    ctr <- getverticeshr(x = ud, percent = percent[i])
+    ctr@proj4string <- CRS('+proj=longlat')
+    ctr <- geojson_list(ctr)
+    ud_list[[i]] <- ctr
+  }
+  geojson <- geojson_json(Reduce(`+`, ud_list))
+  return(geojson)
+}
+
+x <- get_ud(kd, seq(55, 95, 10))
+gj <- geojson_json(x[[1]] + x[[2]])
+
+leaflet(df) %>% addTiles() %>% addGeoJSON(x, weight = 1) %>% addCircleMarkers(radius = 3, stroke = F)

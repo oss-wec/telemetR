@@ -46,6 +46,7 @@ install.packages("sp")
 install.packages("geojsonio")
 install.packages("adehabitatHR")
 install.packages("gridExtra")
+install.packages("fasttime")
 ```
 
 I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses.
