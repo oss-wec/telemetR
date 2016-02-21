@@ -163,7 +163,7 @@ leaflet(df) %>% addTiles() %>% addGeoJSON(x, weight = 1) %>% addCircleMarkers(ra
 #####################################################
 dat <- fread('Collars.csv')
 dat$timestamp <- fastPOSIXct(dat$timestamp)
-df <- dat[ndowid %in% c(1135, 1140, 1136, 1141, 1139), ]
+df <- dat[ndowid %in% c(1135, 1140, 1136, 1141), ]
 df <- dat[ndowid == 1140, ]
 d <- df
 
@@ -176,8 +176,9 @@ image(kd[[2]])
 plot(getverticeshr(kd, 90), add = T)
 
 get_mud <- function(ud) {
-  gjm_list <- list(length(ud))
+  gjm_list <- list()
   for (i in seq_along(ud)) {
+    print(i)
     gj <- get_ud(ud[[i]], c(50, 70, 90))
     gjm_list[[i]] <- gj
   }
@@ -241,8 +242,24 @@ dm
 
 coordinates(df) <- df[, .(long_x, lat_y)]
 df@proj4string <- CRS('+proj=longlat')
-kd <- kernelUD(df[, 2], h = 'href', same4all = T)
+df <- spTransform(df, CRS('+proj=utm +zone=11'))
+kd <- kernelUD(df[, 2], h = 'href', same4all = T, grid = 100)
 
 gj <- get_mud(kd)
 
+DeviceMapping_geojson(dm, gj)
+
+get_ud(kd[[5]], c(90, 99))
+
+# testing the two get_ud functions
+dat <- fread('Collars.csv')
+dat$timestamp <- fastPOSIXct(dat$timestamp)
+df <- dat[ndowid %in% c(1141, 1142, 1135), ]
+d <- df
+coordinates(df) <- df[, .(long_x, lat_y)]
+df@proj4string <- CRS('+proj=longlat')
+kd <- kernelUD(df[, 2], h = 'href', same4all = T, grid = 100)
+dm <- DeviceMapping(d)
+dm
+gj <- get_mud(kd)
 DeviceMapping_geojson(dm, gj)
