@@ -132,35 +132,15 @@ leaflet() %>% addProviderTiles('Esri.WorldTopoMap') %>%
 #####################################################################
 # EXPANDING FUNCTIONALITY TO INCLUDE MORE THAN ONE ANIMAL AT A TIME #
 #####################################################################
-
 dat <- fread('Collars.csv')
 dat$timestamp <- fastPOSIXct(dat$timestamp)
 df <- dat[ndowid %in% c(1135, 1136), ]
-
-## estimating kernel density for two animals
-coordinates(df) <- df[, .(long_x, lat_y)]  #converting to SPDF
-kd <- kernelUD(df[, 2])
-image(kd)
-vd <- getvolumeUD(kd)
-image(vd[[1]])
-contour(vd[[1]], add = T)
-image(vd[[2]])
-contour(vd[[2]], add = T)
-
-## encapsulating
 df <- dat[ndowid == 1135, ]
 coordinates(df) <- df[, .(long_x, lat_y)]
 df@proj4string <- CRS('+proj=longlat')
-#df <- spTransform(df, CRS('+proj=utm +zone=11'))
 kd <- kernelUD(df[, 2])
 image(kd)
-x <- getverticeshr(kd, 99)
-plot(x[[1]], add = T)
-
-get_ud <- function(ud, percent) {
-  ud1 <- getverticeshr(ud, percent[2])
-}
-x <- get_ud(kd, c(90, 99))
+plot(getverticeshr(kd, 95), add = T)
 
 ## function to return multiple UD contours for one UD
 get_ud <- function(ud, percent) {
@@ -175,7 +155,94 @@ get_ud <- function(ud, percent) {
   return(geojson)
 }
 
-x <- get_ud(kd, seq(55, 95, 10))
-gj <- geojson_json(x[[1]] + x[[2]])
-
+x <- get_ud(kd[[1]], seq(55, 95, 10))
 leaflet(df) %>% addTiles() %>% addGeoJSON(x, weight = 1) %>% addCircleMarkers(radius = 3, stroke = F)
+
+#####################################################
+# function to calculate UD for multiple individuals #
+#####################################################
+dat <- fread('Collars.csv')
+dat$timestamp <- fastPOSIXct(dat$timestamp)
+df <- dat[ndowid %in% c(1135, 1140, 1136, 1141, 1139), ]
+df <- dat[ndowid == 1140, ]
+d <- df
+
+coordinates(df) <- df[, .(long_x, lat_y)]
+df@proj4string <- CRS('+proj=longlat')
+kd <- kernelUD(df[, 2], h = 'href')
+image(kd)
+image(kd[[1]])
+image(kd[[2]])
+plot(getverticeshr(kd, 90), add = T)
+
+get_mud <- function(ud) {
+  gjm_list <- list(length(ud))
+  for (i in seq_along(ud)) {
+    gj <- get_ud(ud[[i]], c(50, 70, 90))
+    gjm_list[[i]] <- gj
+  }
+  names(gjm_list) <- names(ud)
+  return(gjm_list)
+}
+g <- get_mud(kd)
+leaflet(df) %>% addTiles() %>% addGeoJSON(g$`1140`, weight = 1) %>% addCircleMarkers(radius = 3, stroke = F)
+
+#################################################
+# building multiple geojson into device_mapping #
+#################################################
+DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
+  dat <- as.data.table(dataframe)
+  dat <- dat[complete.cases(dat[, .(long_x, lat_y)])]
+  unique.id <- unique(dat$ndowid)
+  pal <- ggthemes::gdocs_pal()(20)
+  
+  device.map <- leaflet() %>% 
+    addProviderTiles(basemap)
+  layer.group <- list()
+  
+  for(i in 1:length(unique.id)) {
+    df <- dat[ndowid == unique.id[i]]
+    device.map <- addPolylines(device.map, 
+                               lng = df$long_x, lat = df$lat_y,
+                               group = as.character(unique.id[i]),
+                               color = "grey",
+                               weight = 2
+    )
+    #df <- df[, .SD[c(seq(1, .N, 5), .N)]]
+    device.map <- addCircleMarkers(device.map,
+                                   lng = df$long_x, lat = df$lat_y,
+                                   group = as.character(unique.id[i]),
+                                   radius = 3,
+                                   stroke = FALSE,
+                                   fillOpacity = .5,
+                                   color = pal[i],
+                                   popup = paste(sep = "<br>",
+                                                 paste("<b>NDOW ID:</b> ", unique.id[i]),
+                                                 paste("<b>timestamp:</b> ", df$timestamp),
+                                                 paste("<b>LocID</b>: ", df$locid))
+    )
+    layer.group <- c(layer.group, as.character(unique.id[i]))
+  } 
+  device.map <- addLayersControl(device.map, overlayGroups = layer.group)
+  return(device.map)
+}
+
+DeviceMapping_geojson <- function(device.map, geojson) {
+  pal <- ggthemes::gdocs_pal()(20)
+  for (i in seq_along(geojson)) {
+    device.map <- addGeoJSON(device.map, geojson[[i]], color = pal[i],
+                             weight = 1, group = names(geojson)[i])
+ }
+  return(device.map)
+}
+
+dm <- DeviceMapping(d)
+dm
+
+coordinates(df) <- df[, .(long_x, lat_y)]
+df@proj4string <- CRS('+proj=longlat')
+kd <- kernelUD(df[, 2], h = 'href', same4all = T)
+
+gj <- get_mud(kd)
+
+DeviceMapping_geojson(dm, gj)
