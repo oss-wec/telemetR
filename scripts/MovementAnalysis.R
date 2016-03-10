@@ -5,10 +5,11 @@ library(lubridate)
 library(dplyr)
 library(viridis)
 library(ggthemes)
+
 #########################################################
 # MOVEMENT PARAMETERS CALCULATIONS                      #
 #########################################################
-dat <- fread("Collars.csv", nrows = 100000)
+dat <- fread("Collars.csv")
 df <- dat[dat$ndowid == 292, ]
 df <- dat[dat$ndowid %in% c(292, 831), ]
 
@@ -237,3 +238,163 @@ ggplot(d, aes(x = sqrt(speed))) + geom_histogram()
 summary(d$speed)
 
 ggplot(d, aes(x = dt, y = speed)) + geom_point()
+
+
+#########################################
+# PLOTTING ALL FIGURES FOR PRESENTATION #
+#########################################
+dat <- fread('Collars.csv')
+df <- dat[ndowid %in% c(4085, 4086, 3494, 1576), ]
+df <- coord_conv(df)
+df$timestamp <- fasttime::fastPOSIXct(df$timestamp)
+df[, dist := move.dist(x, y), by = ndowid]
+df[, sig.dist := cumsum(dist), by = ndowid]
+df[, R2n := move.r2n(x, y), by = ndowid]
+df[, dt := move.dt(timestamp), by = ndowid]
+df[, speed := move.speed(dist, dt), by = ndowid]
+df[, hr := hour(timestamp), by = ndowid]
+df[, mth := month(timestamp), by = ndowid]
+df[, d.mth := days(timestamp), by = ndowid]
+str(df)
+d <- df
+
+g1 <- movement_eda(df[ndowid == 1140, ], 'sig.dist')
+g2 <- movement_eda(df[ndowid == 1140, ], 'R2n')
+g3 <- movement_eda(df[ndowid == 1140, ], 'dist', 'point')
+g5 <- movement_eda(df[ndowid == 1145, ], 'sig.dist')
+g6 <- movement_eda(df[ndowid == 1145, ], 'R2n')
+g7 <- movement_eda(df[ndowid == 1145, ], 'dist', 'point')
+glist <- list(g1, g2, g3)
+g <- do.call('grid.arrange', c(glist, ncol = 1))
+plist <- list(g5, g6, g7)
+p <- do.call('grid.arrange', c(plist, ncol = 1))
+grid.arrange(glist, plist, ncol = 2)
+
+grid.arrange(g1, g2, g3, g5, g6, g7, layout_matrix = rbind(c(1, 5),
+                                                           c(2, 6),
+                                                           c(3, 7)))
+
+movement_eda <- function(dat, plot_var, type = 'line', color) {
+  
+  if (missing(color)) {
+    color_pal <- ggthemes::gdocs_pal()(20)
+  } else {
+    color_pal <- color
+  }
+
+  p <- ggplot(dat, aes(group = ndowid, color = factor(ndowid), fill = factor(ndowid)))
+  if(type == 'histogram'){
+    p <- p + geom_histogram(aes_string(x = plot_var))
+  } else if (type == 'line'){
+    p <- p + geom_line(aes_string(x = 'timestamp', y = plot_var), size = .75)
+  } else if (type == 'point'){
+    p <- p + geom_point(aes_string(x = 'timestamp', y = plot_var), size = 1.5)
+  }
+  p <- p + facet_wrap(~ndowid, scales = 'free', ncol = 1) +
+    scale_color_manual(values = color_pal) + 
+    scale_fill_manual(values = color_pal) +
+    theme(panel.background = element_rect(fill = 'white'),
+          plot.background = element_rect(fill = 'white'),
+          panel.grid.major.x = element_line(color = 'grey90', size = .5),
+          panel.grid.minor.x = element_blank(),
+          panel.grid.major.y = element_line(color = 'grey90', size = .5),
+          panel.grid.minor.y = element_blank(),
+          legend.position = 'none',
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(color = 'grey50', size = 14),
+          axis.text.x = element_text(color = 'grey50', size = 10),
+          axis.text.y = element_text(color = 'grey50', size = 10),
+          axis.ticks = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(color = 'grey50', size = 12))
+  return(p)
+}
+
+pal <- ggthemes::gdocs_pal()(5)
+
+grid.arrange( 
+  movement_eda(df[ndowid == 1576, ], 'sig.dist', color = pal[2]),
+  movement_eda(df[ndowid == 1576, ], 'R2n', color = pal[2]),
+  movement_eda(df[ndowid == 1576, ], 'dist', 'point', color = pal[2]),
+  ncol = 1)
+
+############################
+# HEATMAP FOR PRESENTATION #
+############################
+dat <- fread("Collars.csv", nrows = 100000)
+d <- df[ndowid == 1576, ]
+d$day.m <- day(d$timestamp)
+d.hm <- d %>% 
+  group_by(mth, hr) %>% 
+  summarize(m.dist = mean(dist),
+            m.speed = mean(sqrt(speed)))
+
+d.hm.d <- d %>% 
+  group_by(hr, day.m, mth) %>% 
+  summarize(m.dist = mean(dist),
+            m.speed = mean(sqrt(speed)))
+
+## HEATMAP OF DISTANCE TRAVELLED
+ggplot(d.hm, aes(x = hr, y = mth, fill = m.dist)) +
+  geom_tile(color = 'white', size = .1) +
+  scale_fill_viridis(name = 'Mean Distance') +
+  scale_x_continuous(breaks = seq(0, 23, 1)) +
+  scale_y_continuous(breaks = seq(1, 12, 1)) +
+  labs(list(x = 'Hour of day', y = 'Month', title = 'Heatmap of mean distance travelled (1576)')) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )
+
+## HEATMAP OF SPEED
+ggplot(d.hm, aes(x = hr, y = mth, fill = m.speed)) +
+  geom_tile(color = 'white', size = .1) +
+  scale_fill_viridis(name = 'sqrt(Speed)') +
+  scale_x_continuous(breaks = seq(0, 23, 1)) +
+  scale_y_continuous(breaks = seq(1, 12, 1)) +
+  labs(list(x = 'Hour of day', y = 'Month', title = 'Heatmap of speed (1576)')) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )
+
+ggplot(d.hm.d[mth == 1], aes(x = hr, y = day.m, fill = m.speed, group = mth)) +
+  geom_tile(color = 'white') +
+  facet_wrap(~mth) +
+  scale_fill_viridis(name = 'sqrt(Speed)') +
+  scale_x_continuous(breaks = seq(0, 23, 4)) +
+  scale_y_continuous(breaks = seq(1, 31, 2)) +
+  labs(list(x = 'Hour of day', y = 'Day of month', title = 'Heatmap of speed (1576)')) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )
+
+dat <- fread('AllCollars.csv')
+
+glist <- lapply(1:12, function(i) 
+ggplot(d.hm.d[mth == i], aes(x = hr, y = day.m, fill = m.speed, group = mth)) +
+  geom_tile(color = 'white') +
+  facet_wrap(~mth) +
+  scale_fill_viridis(name = 'sqrt(Speed)') +
+  scale_x_continuous(breaks = seq(0, 23, 4)) +
+  scale_y_continuous(breaks = seq(1, 31, 2)) +
+  labs(list(x = 'Hour of day', y = 'Day of month', title = 'Heatmap of speed (1576)')) +
+  coord_equal() +
+  theme_tufte() +
+  theme(
+    axis.ticks = element_blank(),
+    panel.border = element_blank()
+  )
+)
+
+do.call('grid.arrange', c(glist))
+
+?lapply
+glist

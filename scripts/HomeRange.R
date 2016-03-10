@@ -263,3 +263,6 @@ dm <- DeviceMapping(d)
 dm
 gj <- get_mud(kd)
 DeviceMapping_geojson(dm, gj)
+
+## brownian bridge
+df <- dat[ndowid == 1576, ]

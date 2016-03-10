@@ -1,6 +1,6 @@
-library(shiny, verbose = TRUE)
-library(leaflet, verbose = TRUE)
-library(data.table, verbose = TRUE)
+library(shiny, verbose = FALSE)
+library(leaflet, verbose = FALSE)
+library(data.table, verbose = FALSE)
 library(gridExtra, verbose = FALSE)
 library(geojsonio, verbose = FALSE)
 library(lubridate, verbose = FALSE)
@@ -108,15 +108,15 @@ shinyServer(function(input, output) {
     
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       cp <- SpatialPoints(move_df()[, .(x, y)], CRS('+proj=utm +zone=11'))
-      cp <- mcp(cp, percent = 90)
+      cp <- mcp(cp, percent = 99)
       cp <- spTransform(cp, CRS('+proj=longlat'))
       hr <- geojson_json(cp)
     } else if (input$sl_HomeRange == 'Kernel Density') {
-      kd <- SpatialPoints(move_df()[, .(x, y)], CRS('+proj=utm +zone=11'))
-      kd <- kernelUD(kd, h = 'href')
-      hr <- geojson_json(geojson_list(get_ud(kd, 90)) + 
-                           geojson_list(get_ud(kd, 70)) + 
-                           geojson_list(get_ud(kd, 50)))
+      kd <- move_df()
+      coordinates(kd) <- kd[, .(x, y)]
+      kd@proj4string <- CRS('+proj=utm +zone=11')
+      kd <- kernelUD(kd[, 2], h = 'href')
+      hr <- get_mud(kd)
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
@@ -124,8 +124,7 @@ shinyServer(function(input, output) {
                           geojson_list(get_ud(bb, 70)) +
                           geojson_list(get_ud(bb, 50)))
     }
-    hr_map <- hr_map %>% addGeoJSON(hr, stroke = TRUE, weight = 1, color = '#3366CC',
-                                    fillOpacity = .3, smoothFactor = 2)
+    hr_map <- DeviceMapping_geojson(hr_map, hr)
     return(hr_map)
   })
   

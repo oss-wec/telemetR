@@ -84,15 +84,15 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
                                lng = df$long_x, lat = df$lat_y,
                                group = as.character(unique.id[i]),
                                color = "grey",
-                               weight = 2
+                               weight = 1
     )
     #df <- df[, .SD[c(seq(1, .N, 5), .N)]]
     device.map <- addCircleMarkers(device.map,
                                    lng = df$long_x, lat = df$lat_y,
                                    group = as.character(unique.id[i]),
-                                   radius = 3,
+                                   radius = 2,
                                    stroke = FALSE,
-                                   fillOpacity = .5,
+                                   fillOpacity = .3,
                                    color = pal[i],
                                    popup = paste(sep = "<br>",
                                                  paste("<b>NDOW ID:</b> ", unique.id[i]),
@@ -102,6 +102,15 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
     layer.group <- c(layer.group, as.character(unique.id[i]))
   } 
   device.map <- addLayersControl(device.map, overlayGroups = layer.group)
+  return(device.map)
+}
+
+DeviceMapping_geojson <- function(device.map, geojson) {
+  pal <- ggthemes::gdocs_pal()(20)
+  for (i in seq_along(geojson)) {
+    device.map <- addGeoJSON(device.map, geojson[[i]], color = pal[i],
+                             weight = 1, group = names(geojson)[i])
+  }
   return(device.map)
 }
 
@@ -126,11 +135,32 @@ estimate_bbmm <- function(traj) {
   return(bb)
 }
 
-get_ud <- function(bb, pct_ud) {
-  ud <- getverticeshr(bb, pct_ud)
-  ud@proj4string <- CRS("+proj=utm +zone=11 +datum=WGS84")
-  ud <- spTransform(ud, CRS("+proj=longlat"))
-  return(ud)
+get_ud <- function(ud, percent) {
+  ud_list <- list(length(percent))
+  for (i in seq_along(percent)) {
+    ctr <- getverticeshr(x = ud, percent = percent[i])
+    ctr@proj4string <- CRS('+proj=utm +zone=11')
+    ctr <- spTransform(ctr, CRS('+proj=longlat'))
+    ctr <- geojson_list(ctr)
+    ud_list[[i]] <- ctr
+  }
+  geojson <- geojson_json(Reduce(`+`, ud_list))
+  return(geojson)
+}
+
+get_mud <- function(ud) {
+  gjm_list <- list()
+  print(paste('n elements', length(ud)))
+  print('entering for loop')
+  for (i in 1:length(ud)) {
+    print(paste('before ud', i, 'NDOWID', names(ud)[i]))
+    gj <- get_ud(ud[[i]], c(50, 70, 90))
+    print(paste('before list assignment', i))
+    gjm_list[[i]] <- gj
+  }
+  print('exit loop')
+  names(gjm_list) <- names(ud)
+  return(gjm_list)
 }
 
 # MOVEMENT ANALYSIS FUNCTIONS
@@ -169,7 +199,7 @@ move.speed <- function(dist, time) {
 }
 
 movement_eda <- function(dat, plot_var, type = 'line') {
-  color_pal <- c('royalblue4', 'firebrick4', 'wheat4', 'mediumorchid4', 'springgreen4')
+  color_pal <- ggthemes::gdocs_pal()(20)
   
   p <- ggplot(dat, aes(group = ndowid, color = factor(ndowid), fill = factor(ndowid)))
   if(type == 'histogram'){
@@ -188,6 +218,7 @@ movement_eda <- function(dat, plot_var, type = 'line') {
           panel.grid.minor.x = element_blank(),
           panel.grid.major.y = element_line(color = 'grey90', size = .5),
           panel.grid.minor.y = element_blank(),
+          legend.position = 'none',
           axis.title.x = element_blank(),
           axis.title.y = element_text(color = 'grey50', size = 14),
           axis.text.x = element_text(color = 'grey50', size = 10),

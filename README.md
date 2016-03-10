@@ -1,31 +1,11 @@
 # Collar Data Export
-*0.80.1*
+*0.80.3*
 
-A Shiny application to extract GPS collar data from NDOW's GPS collar data warehouse.
+A Shiny application for the exploratory analysis and visualization of animal movement.
 
 ## Justification
 
-We have organized all GPS collar location data ( >1.8 million records) into a single database yet all data output is limited to SQL statements and Microsoft Excel line limit (65,000 rows). This application provides a user interface for interactively and visually selecting GPS location data for export.
-
-The application also provides an GUI for exploratory data analysis and visualization. Users can estimate basic home range and utilization distributions, and plots of standard movement parameters.
-
-## Use Case
-
-The application can be used anytime a subset of GPS collar data is needed for analysis. The collar manufacturer's website will be the most up to date data, if required use their proprietary applications.
-
-### Brownian Bridge Movement Models
-
-The location data for one Rocky Mountain bighorn sheep was exported to analyze the expected movement path using Brownian bridge movement models.
-
-![bbmm export](https://e3a0a746a3d3c5fa95928f1d69a3e9079c622a5f.googledrive.com/host/0B1OupsoLNZvkYTdtVFRIelBoN00/bbmm_example.jpg)
-
-### Quantifying Migration
-
-The location data for on mule deer was exported to quantify migration by plotting the net squared displacement against time.
-
-![bbmm export](https://e3a0a746a3d3c5fa95928f1d69a3e9079c622a5f.googledrive.com/host/0B1OupsoLNZvkYTdtVFRIelBoN00/nsd_example.jpg)
-
-*check the Migration Tab for more information.*
+We have organized all GPS collar location data ( ~2 million records) into a single database yet all data output is limited to SQL statements and Microsoft Excel line limit (65,000 rows). The application also provides an GUI for exploratory data analysis and visualization of animal movement. Users can estimate basic home range and utilization distributions, and plots of standard movement parameters. After exploratory analysis is complete, data can be downloaded for further analysis.
 
 ## Requirements
 
@@ -49,14 +29,17 @@ install.packages("gridExtra")
 install.packages("fasttime")
 ```
 
-I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses.
+I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses. If the application errors on startup due to an uninstalled package, the R console will inform which packages needs to be installed. Install the package with the `install.packages('package name')` function call.
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
 ```r
 shiny::runGitHub("CollarDataExport", "mgritts", launch.browser = TRUE)
 ```
 
-Permissions for the GIS data drive (V:/ActiveProjects/Game) is required to access the data for the application.
+A development version of this package is available at the [kissmygritts/CollarDataExport repo](http://www.github.com/kissmygritts/collardataexport). (Some folks don't think kissmygritts is a professional username). If you want to look at/use that version run this command.
+```r
+shiny::runGitHub("CollarDataExport", "kissmygritts", launch.browser = TRUE)
+```
 
 ## Instructions
 
@@ -88,14 +71,16 @@ The fourth page shows all the GPS data for individuals displayed on the map. Thi
 
 ## About the Data
 
+The data source is hard-coded into the application. Future development may allow for selection of your data sources. To overcome this limitation, fork and clone this repo to your hard drive and modify as needed.
+
 The sources of raw data are the GPS collar manufacturers for each collar. This data is organized and maintained in a relational database by NDOW GIS & Game staff. New collar data is migrated to the database once a month. Therefore, the data in this application isn't the most up to date. At the greatest, the data is delayed by 30 days. The data is stored on NDOW's network, therefore users must be networked to and have permission for the Game folder on the GIS Share drive. This is due to the sensitive nature of location data. This is a temporary solution, we are looking for alternatives that will make the data more accessible to all staff that may use this data.
 
 ## Known Bugs
 
-Current version has no known bugs
+When selecting All Points on the Spatial page without selecting a home range estimation method the map will fail to display.
 
 ## TODO
-- [ ] Change name of column headers
+- [x] Change name of column headers
 - [ ] Use 'start' and 'stop' markers for first and last points
 - [x] Clear/Reset Map page input
 - [ ] Reset input on tab change... may not be possible?
@@ -103,9 +88,10 @@ Current version has no known bugs
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered
 - [ ] Remove erroneous points, persistent to data download
+  - [ ] There is some questions about this step for future analysis
 - [x] Include migration analysis plots
 - [x] Include utilization distributions.
-  - [ ] As shapefile?
+  - [ ] Download as shapefile?
 - [x] NSD plots and associated maps
 
-To add items to the TODO list, or report errors that occur while using the application contact Mitch Gritts (mgritts@ndow.org).
+To add items to the TODO list, or report errors that occur while using the application contact Mitch Gritts (mitchellgirtts@gmail.com).

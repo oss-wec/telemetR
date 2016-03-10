@@ -66,7 +66,7 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                                       choices = c("dist", "R2n", "sig.dist", "speed", "dt")),
                           actionButton("ac_RunAnalysis", "Run Anlysis")),
              mainPanel(
-               plotOutput("move.plot", width = "100%"),
+               plotOutput("move.plot", width = "100%", height = 700),
                tableOutput("move.table")
                )
              )),
