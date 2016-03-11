@@ -6,6 +6,8 @@ library(fasttime)
 library(dplyr)
 library(viridis)
 library(ggthemes)
+library(gridExtra)
+library(changepoint)
 
 
 dat <- fread('Collars.CSV')
@@ -31,7 +33,7 @@ d <- df
 r2n_plot <- movement_eda(df, 'R2n')
 r2n_plot
 movement_eda(df, 'sqrtR2n')
-
+grid.arrange(r2n_plot, movement_eda(df, 'sqrtR2n'))
 
 ## NSD inlfection points
 dR2n <- df$R2n[-length(df$R2n)] - df$R2n[-1]
@@ -65,5 +67,38 @@ g.nd <- movement_eda(df.mig, 'sqrtR2n', 'point')
 gridExtra::grid.arrange(g.nsd, g.nd, nrow = 2)
 
 
-## break point detection
+## one point per day
+df.mig$date <- as.Date(df.mig$timestamp)
+df.oneday <- df.mig[, .SD[1], by = date]
+movement_eda(df.oneday, 'R2n')
 
+## breakpoint
+hist(df.mig$R2n)
+hist(df.mig$sqrtR2n)
+hist(df.mig$dist)
+bp <- cpt.meanvar(df.mig$R2n)
+plot(bp)
+cpts(bp)
+bp <- cpt.meanvar(df$R2n, method = 'BinSeg')
+plot(bp)
+plot.ts(bp)
+cpts(bp)
+
+
+bp.pelt <- cpt.meanvar(df$R2n, method = 'PELT', Q = 10)
+cpts(bp.pelt)
+plot(bp.pelt)
+
+
+## TSD (Time scaled distance)
+x <- df.mig$x
+y <- df.mig$y 
+v <- df.mig$speed
+t <- df.mig$timestamp
+s = 0.04
+tsd <- sqrt((x - x[1])**2 + (y - y[1])**2 + 
+           (s * max(v, na.rm = T) * 
+           (as.integer(abs(difftime(t[1], t, units = 'secs')))) ))
+tsd[1] <- 0
+tsd.df <- data.frame(tsd = tsd, index = 1:length(tsd))
+plot(x = tsd.df$index, y = tsd.df$tsd, type = 'l')

@@ -45,11 +45,14 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       h2("Spatial Analysis"),
                       p("Select inputs for spatial analysis."),
                       radioButtons('rd_nPoints', 'Path Smoothing', choices = c('Smooth', 'All Points'),
-                                   selected = 'Smooth', inline = TRUE),
+                                   selected = 'All Points', inline = TRUE),
                       selectizeInput("sl_HomeRange", "Homerange Estimation Method",
                                      choices = c('Select Method', "Minimum Convex Polygon", "Kernel Density", "Brownian Bridge"),
                                      selected = 'Select Method'),
-                      actionButton("ac_UpdateMap", "Update Map")
+                      textInput('tx_Contour', 'Contour Percentages', placeholder = '95'),
+                      actionButton("ac_UpdateMap", "Update Map"), 
+                      hr(),
+                      textOutput('tx_ModelOut')
                       )
     )
   ),

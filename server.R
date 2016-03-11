@@ -10,10 +10,10 @@ library(adehabitatHR, verbose = FALSE)
 library(fasttime, verbose = FALSE)
 source("global.R")
 
-#dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
-#dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-dat <- fread("Collars.csv", encoding = "UTF-8")
-dat_animal <- read.csv("Animals.csv")
+dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
+dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
+#dat <- fread("Collars.csv", encoding = "UTF-8")
+#dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
@@ -40,10 +40,7 @@ shinyServer(function(input, output) {
 
   # LIST OF NDOW IDS TO SUBSET DATAFRAME
   id_list <- reactive({
-    id_list <- strsplit(input$tx_ndowid, ", ")
-    id_list <- id_list[[1]]
-    id_list <- as.numeric(id_list)
-    return(id_list)
+    return(as.numeric(strsplit(input$tx_ndowid, ', ')[[1]]))
   })
   
   # DATAFRAME SUBSET BY SELECTED SPECIES, MGMT AREA, ID, DATE
