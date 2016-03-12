@@ -9,18 +9,19 @@ CollarMap <- function(dataframe) {
   df <- df[complete.cases(df[, .(long_x, lat_y)])]
   df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
   unq_id <- unique(df[, ndowid])
+  pal <- rep_len(ggthemes::gdocs_pal()(20), length(unq_id))
   map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
   
-  for (n in unq_id) {
-    d <- df_lines[ndowid == n]
+  for (i in 1:length(unq_id)) {
+    d <- df_lines[ndowid == unq_id[i]]
     dp <- d[, .SD[c(1, .N)]]
     
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
-                        weight = 2, color = "black", opacity = .4)
+                        weight = 2, color = pal[i], opacity = .4)
     map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
-                            stroke = FALSE, radius = 4, color = "navy",
+                            stroke = FALSE, radius = 4, color = pal[i],
                             fillOpacity = 1,
-                            popup = paste("NDOW ID:", n))
+                            popup = paste("NDOW ID:", unq_id[i]))
   }
   return(map)
 }
@@ -83,14 +84,14 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
     device.map <- addPolylines(device.map, 
                                lng = df$long_x, lat = df$lat_y,
                                group = as.character(unique.id[i]),
-                               color = "grey",
+                               color = pal[i],
                                weight = 1
     )
     #df <- df[, .SD[c(seq(1, .N, 5), .N)]]
     device.map <- addCircleMarkers(device.map,
                                    lng = df$long_x, lat = df$lat_y,
                                    group = as.character(unique.id[i]),
-                                   radius = 2,
+                                   radius = 3,
                                    stroke = FALSE,
                                    fillOpacity = .3,
                                    color = pal[i],
@@ -135,10 +136,13 @@ estimate_bbmm <- function(traj) {
   return(bb)
 }
 
-get_ud <- function(ud, percent) {
-  ud_list <- list(length(percent))
-  for (i in seq_along(percent)) {
-    ctr <- getverticeshr(x = ud, percent = percent[i])
+get_ud <- function(ud, pct_contour) {
+  ud_list <- list(length(pct_contour))
+  print('----- Entering contour loop')
+  print(paste('-----', pct_contour))
+  for (i in seq_along(pct_contour)) {
+    print(paste('-----', pct_contour[[i]]))
+    ctr <- getverticeshr(x = ud, percent = pct_contour[[i]])
     ctr@proj4string <- CRS('+proj=utm +zone=11')
     ctr <- spTransform(ctr, CRS('+proj=longlat'))
     ctr <- geojson_list(ctr)
@@ -148,13 +152,13 @@ get_ud <- function(ud, percent) {
   return(geojson)
 }
 
-get_mud <- function(ud) {
+get_mud <- function(ud, pct_contour) {
   gjm_list <- list()
   print(paste('n elements', length(ud)))
   print('entering for loop')
   for (i in 1:length(ud)) {
     print(paste('before ud', i, 'NDOWID', names(ud)[i]))
-    gj <- get_ud(ud[[i]], c(50, 70, 90))
+    gj <- get_ud(ud[[i]], pct_contour)
     print(paste('before list assignment', i))
     gjm_list[[i]] <- gj
   }

@@ -44,8 +44,8 @@ image(kd)
 plot(getverticeshr(kd, 95), add = T)
 
 ## getting contours for leaflet map
-ud <- get_ud(kd, 10*1:9)
-
+ud <- get_ud(kd, id_list)
+mud <- get_mud(kd, id_list)
 ## plotting in leaflet
 leaflet() %>% addTiles() %>% 
   addGeoJSON(ud, weight = 1) %>% 

@@ -52,7 +52,7 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       textInput('tx_Contour', 'Contour Percentages', placeholder = '95'),
                       actionButton("ac_UpdateMap", "Update Map"), 
                       hr(),
-                      textOutput('tx_ModelOut')
+                      textOutput('tx_Conts')
                       )
     )
   ),

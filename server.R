@@ -95,14 +95,25 @@ shinyServer(function(input, output) {
     return(df)
   })
   
-  # PAGE 2 MAP, EVERY POINT
-  hr_ud <- eventReactive(input$ac_UpdateMap, {
+# PAGE 2 MAP, EVERY POINT
+  
+  ## CONTOUR LIST
+  pct_contour <- reactive({
+    return(as.numeric(strsplit(input$tx_Contour, ', ')[[1]]))
+  })
+  
+  ## BASEMAP
+  basemap <- eventReactive(input$ac_UpdateMap, {
     if (input$rd_nPoints == 'Smooth') {
-      hr_map <- CollarMap(df_subset())
+      basemap <- CollarMap(df_subset())
     } else {
-      hr_map <- DeviceMapping(df_subset())
+      basemap <- DeviceMapping(df_subset())
     }
-    
+    return(basemap)
+  })
+  
+  ## HOME RANGE ESTIMATION
+  hr_ud <- eventReactive(input$ac_UpdateMap, {
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       cp <- SpatialPoints(move_df()[, .(x, y)], CRS('+proj=utm +zone=11'))
       cp <- mcp(cp, percent = 99)
@@ -113,16 +124,25 @@ shinyServer(function(input, output) {
       coordinates(kd) <- kd[, .(x, y)]
       kd@proj4string <- CRS('+proj=utm +zone=11')
       kd <- kernelUD(kd[, 2], h = 'href')
-      hr <- get_mud(kd)
+      hr <- get_mud(kd, pct_contour())
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
       hr <- geojson_json(geojson_list(get_ud(bb, 90)) +
                           geojson_list(get_ud(bb, 70)) +
                           geojson_list(get_ud(bb, 50)))
+    } else if (input$sl_HomeRange == 'Select Method') {
+      return(basemap())
     }
-    hr_map <- DeviceMapping_geojson(hr_map, hr)
+    
+    
+    hr_map <- DeviceMapping_geojson(basemap(), hr)
     return(hr_map)
+  })
+  
+  # TESTING TEXT OUTPUT
+  output$tx_Conts <- renderText({
+    pct_contour()
   })
   
   # MAP OUTPUT
