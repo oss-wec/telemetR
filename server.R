@@ -61,12 +61,18 @@ shinyServer(function(input, output) {
     return(df)
   })
   
+  # DATAFRAME OF ROWS WITH NA VALUES FOR LAT OR LONG
+  df_na <- reactive({
+    return(df_subset()[is.na(df_subset()$long_x | df_subset()$lat_y), ])
+  })
+  
   # OUTPUT INFO FOR ANIMALS SELECTED IN MAP
   output$dataInfo <- renderUI({
     HTML(
       paste(sep = "<br/>",
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
+            paste("<b>Total NAs</b>", nrow(df_na())),
             paste("<b>Min. Date:</b> ", min(df_subset()$timestamp)),
             paste("<b>Max. Date:</b> ", max(df_subset()$timestamp))
             ))
