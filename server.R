@@ -58,6 +58,8 @@ shinyServer(function(input, output) {
                  timestamp <= as.POSIXct(input$sl_dates[2]), ]
       }
     }
+    # err_pts <- as.numeric(strsplit(input$tx_ErrPoints, ', ')[[1]])
+    # df <- df[!(locid %in% err_pts), ]
     return(df)
   })
   
@@ -72,7 +74,8 @@ shinyServer(function(input, output) {
       paste(sep = "<br/>",
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
-            paste("<b>Total NAs</b>", nrow(df_na())),
+            paste("<b>Error Rate:</b> ", 
+                  round(nrow(df_na()) / nrow(df_subset()), 4)),
             paste("<b>Min. Date:</b> ", min(df_subset()$timestamp)),
             paste("<b>Max. Date:</b> ", max(df_subset()$timestamp))
             ))
@@ -102,7 +105,6 @@ shinyServer(function(input, output) {
   })
   
 # PAGE 2 MAP, EVERY POINT
-  
   ## CONTOUR LIST
   pct_contour <- reactive({
     return(as.numeric(strsplit(input$tx_Contour, ', ')[[1]]))

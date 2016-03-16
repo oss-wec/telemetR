@@ -55,6 +55,8 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       textInput('tx_Contour', 'Contour Percentages', placeholder = '95'),
                       actionButton("ac_UpdateMap", "Update Map"), 
                       hr(),
+                      # textInput('tx_ErrPoints', 'Remove Erroneous Points', placeholder = 'Enter LocID to remove point'),
+                      # hr(),
                       textOutput('tx_Conts')
                       )
     )

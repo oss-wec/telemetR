@@ -72,35 +72,35 @@ Plot_NSD <- function(dataframe) {
 DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
   dat <- as.data.table(dataframe)
   dat <- dat[complete.cases(dat[, .(long_x, lat_y)])]
-  unique.id <- unique(dat$ndowid)
-  pal <- ggthemes::gdocs_pal()(20)
+  unq_id <- unique(dat$ndowid)
+  pal <- rep_len(ggthemes::gdocs_pal()(20), length(unq_id))
   
   device.map <- leaflet() %>% 
     addProviderTiles(basemap)
   layer.group <- list()
   
-  for(i in 1:length(unique.id)) {
-    df <- dat[ndowid == unique.id[i]]
+  for(i in 1:length(unq_id)) {
+    df <- dat[ndowid == unq_id[i]]
     device.map <- addPolylines(device.map, 
                                lng = df$long_x, lat = df$lat_y,
-                               group = as.character(unique.id[i]),
+                               group = as.character(unq_id[i]),
                                color = pal[i],
                                weight = 1
     )
     #df <- df[, .SD[c(seq(1, .N, 5), .N)]]
     device.map <- addCircleMarkers(device.map,
                                    lng = df$long_x, lat = df$lat_y,
-                                   group = as.character(unique.id[i]),
+                                   group = as.character(unq_id[i]),
                                    radius = 3,
                                    stroke = FALSE,
                                    fillOpacity = .3,
                                    color = pal[i],
                                    popup = paste(sep = "<br>",
-                                                 paste("<b>NDOW ID:</b> ", unique.id[i]),
+                                                 paste("<b>NDOW ID:</b> ", unq_id[i]),
                                                  paste("<b>timestamp:</b> ", df$timestamp),
                                                  paste("<b>LocID</b>: ", df$locid))
     )
-    layer.group <- c(layer.group, as.character(unique.id[i]))
+    layer.group <- c(layer.group, as.character(unq_id[i]))
   } 
   device.map <- addLayersControl(device.map, overlayGroups = layer.group)
   return(device.map)
