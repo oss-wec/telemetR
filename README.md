@@ -1,5 +1,5 @@
-# Collar Data Export
-*0.80.3*
+# telemetR
+*0.80.4*
 
 A Shiny application for the exploratory analysis and visualization of animal movement.
 
@@ -34,12 +34,9 @@ I tried, for a long time to limit the number of packages required for the applic
 
 To run the app use the command below. For all future uses this is the only line you will need to run.
 ```r
-shiny::runGitHub("CollarDataExport", "mgritts", launch.browser = TRUE)
-```
-
-A development version of this package is available at the [kissmygritts/CollarDataExport repo](http://www.github.com/kissmygritts/collardataexport). (Some folks don't think kissmygritts is a professional username). If you want to look at/use that version run this command.
-```r
-shiny::runGitHub("CollarDataExport", "kissmygritts", launch.browser = TRUE)
+shiny::runGitHub("telemetR", "ndow-wisr", launch.browser = TRUE)
+# or
+shiny::runGitHub("ndow-wisr/telemetR", launch.browser = TRUE)
 ```
 
 ## Instructions
@@ -84,12 +81,12 @@ When selecting All Points on the Spatial page without selecting a home range est
 - [x] Change name of column headers
 - [ ] Use 'start' and 'stop' markers for first and last points
 - [x] Clear/Reset Map page input
-- [ ] Reset input on tab change... may not be possible?
-- [ ] Use data.table for all data munging
+- ~~[ ] Reset input on tab change... may not be possible?~~
+- [x] Use data.table for all data munging
 - [ ] Use Leaflet Draw to allow users to subset based on the area
 - [ ] A way for users to request analysis based on data they've entered
-- [ ] Remove erroneous points, persistent to data download
-  - [ ] There is some questions about this step for future analysis
+- [ ] ~~Remove erroneous points, persistent to data download~~
+  - [ ] ~~There is some questions about this step for future analysis~~
 - [x] Include migration analysis plots
 - [x] Include utilization distributions.
   - [ ] Download as shapefile?
