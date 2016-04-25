@@ -12,7 +12,7 @@ source("global.R")
 
 dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-#dat <- fread("Collars.csv", encoding = "UTF-8")
+#dat <- fread("Collars.csv")
 #dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
