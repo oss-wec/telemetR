@@ -1,15 +1,15 @@
-# library(data.table)
-# library(leaflet)
-# library(ggplot2)
-# library(sp)
-# library(adehabitatHR)
+# color palatte used in the application
+color_pal <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", 
+         "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", 
+         "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", 
+         "#5574A6", "#3B3EAC")
 
 CollarMap <- function(dataframe) {
   df <- as.data.table(dataframe)
   df <- df[complete.cases(df[, .(long_x, lat_y)])]
   df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
   unq_id <- unique(df[, ndowid])
-  pal <- rep_len(ggthemes::gdocs_pal()(20), length(unq_id))
+  pal <- rep_len(color_pal, length(unq_id))
   map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
   
   for (i in 1:length(unq_id)) {
@@ -73,7 +73,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
   dat <- as.data.table(dataframe)
   dat <- dat[complete.cases(dat[, .(long_x, lat_y)])]
   unq_id <- unique(dat$ndowid)
-  pal <- rep_len(ggthemes::gdocs_pal()(20), length(unq_id))
+  pal <- rep_len(color_pal, length(unq_id))
   
   device.map <- leaflet() %>% 
     addProviderTiles(basemap)
@@ -107,7 +107,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
 }
 
 DeviceMapping_geojson <- function(device.map, geojson) {
-  pal <- ggthemes::gdocs_pal()(20)
+  pal <- rep_len(color_pal, length(geojson))
   for (i in seq_along(geojson)) {
     device.map <- addGeoJSON(device.map, geojson[[i]], color = pal[i],
                              weight = 1, group = names(geojson)[i])
@@ -203,7 +203,7 @@ move.speed <- function(dist, time) {
 }
 
 movement_eda <- function(dat, plot_var, type = 'line') {
-  color_pal <- ggthemes::gdocs_pal()(20)
+  pal <- rep_len(color_pal, length(unique(dat$ndowid)))
   
   p <- ggplot(dat, aes(group = ndowid, color = factor(ndowid), fill = factor(ndowid)))
   if(type == 'histogram'){
@@ -214,8 +214,8 @@ movement_eda <- function(dat, plot_var, type = 'line') {
     p <- p + geom_point(aes_string(x = 'timestamp', y = plot_var), size = 1.5)
   }
   p <- p + facet_wrap(~ndowid, scales = 'free', ncol = 1) +
-    scale_color_manual(values = color_pal) + 
-    scale_fill_manual(values = color_pal) +
+    scale_color_manual(values = pal) + 
+    scale_fill_manual(values = pal) +
     theme(panel.background = element_rect(fill = 'white'),
           plot.background = element_rect(fill = 'white'),
           panel.grid.major.x = element_line(color = 'grey90', size = .5),

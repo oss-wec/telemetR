@@ -123,12 +123,18 @@ shinyServer(function(input, output) {
   ## HOME RANGE ESTIMATION
   hr_ud <- eventReactive(input$ac_UpdateMap, {
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
-      cp <- move_df()
-      coordinates(cp) <- cp[, .(x, y)]
-      cp@proj4string <- CRS('+proj=utm +zone=11')
-      cp <- mcp(cp[, 2], percent = 99)
+      spdf <- SpatialPointsDataFrame(coordinates(cbind(move_df()$x, move_df()$y)), 
+                                     data = move_df(), proj4string = CRS('+proj=utm +zone=11'))
+      cp <- mcp(spdf[, 2], percent = 99)
       cp <- spTransform(cp, CRS('+proj=longlat'))
-      hr <- geojson_json(cp)
+      ids <- cp$id
+      hr <- vector("list", length(cp$id))
+      for (i in seq_along(ids)) {
+        poly <- cp[cp$id == ids[i], ]
+        poly <- geojson_json(poly)
+        hr[[i]] <- poly
+      }
+      names(hr) <- ids
     } else if (input$sl_HomeRange == 'Kernel Density') {
       kd <- move_df()
       coordinates(kd) <- kd[, .(x, y)]
