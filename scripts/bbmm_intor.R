@@ -62,3 +62,22 @@ leaflet(ud95.latlong) %>% addProviderTiles(("Esri.WorldTopoMap")) %>%
 traj
 plotltr(traj)
 hist(traj[[1]]$dist)
+##
+##
+
+## EXTRACTING POLYGONS FROM BBMM
+df <- dat[dat$ndowid %in% c(1139, 1140), ]
+df <- coord_conv(df)
+df$timestamp <- fastPOSIXct(df$timestamp)
+
+## bbmm methods (to ltraj, estimation)
+traj <- to_ltraj(df)
+bb <- estimate_bbmm(traj)
+image(bb)
+plot(getverticeshr(bb, 95), add = T)
+
+## testing the getud functions I created
+hr <- get_ud(bb, c(90, 99))
+hr <- get_mud(bb, c(90, 99))
+
+x <- kernelbb(traj[1], 5, 40, grid = 100)
