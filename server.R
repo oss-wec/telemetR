@@ -188,7 +188,7 @@ shinyServer(function(input, output) {
   output$downloadData <- downloadHandler(
     filename = function() {paste("CollarData", ".csv", sep = "")},
     content = function(file) {
-      write.csv(df_subset(), file)
+      write.csv(move_df(), file)
     }
   )
 })
