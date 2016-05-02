@@ -91,7 +91,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
     device.map <- addCircleMarkers(device.map,
                                    lng = df$long_x, lat = df$lat_y,
                                    group = as.character(unq_id[i]),
-                                   radius = 3,
+                                   radius = 4,
                                    stroke = FALSE,
                                    fillOpacity = .3,
                                    color = pal[i],
@@ -231,4 +231,39 @@ movement_eda <- function(dat, plot_var, type = 'line') {
           strip.background = element_blank(),
           strip.text = element_text(color = 'grey50', size = 12))
   return(p)
+}
+
+# LEAFLET MAPPING FUNCTIONS 5/2016
+mapPoints <- function(map, df) {
+  df <- as.data.table(df)
+  df <- df[complete.cases(df[, .(long_x, lat_y)])]
+  unq_id <- unique(df$ndowid)
+  pal <- rep_len(color_pal, length(unq_id))
+  layers <- list()
+  
+  for(i in 1:length(unq_id)) {
+    dat <- df[ndowid == unq_id[i]]
+    map <- addPolylines(map, lng = dat$long_x, lat = dat$lat_y,
+                        group = as.character(unq_id[i]),
+                        color = pal[i], weight = 1) 
+    map <- addCircleMarkers(map, lng = dat$long_x, lat = dat$lat_y,
+                            group = as.character(unq_id[i]), color = pal[i],
+                            radius = 3, stroke = FALSE,fillOpacity = .3,
+                            popup = paste(sep = "<br>",
+                                          paste("<b>NDOW ID:</b> ", unq_id[i]),
+                                          paste("<b>timestamp:</b> ", dat$timestamp),
+                                          paste("<b>LocID</b>: ", dat$locid)))
+    layers <- c(layers, as.character(unq_id[i]))
+  }
+  map <- addLayersControl(map, overlayGroups = layers)
+  return(map)
+}
+
+mapPolygons <- function(map, geojson) {
+  pal <- rep_len(color_pal, length(geojson))
+  for (i in seq_along(geojson)) {
+    map <- addGeoJSON(map, geojson[[i]], color = pal[i],
+                      weight = 1, group = names(geojson)[i])
+  }
+  return(map)
 }

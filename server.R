@@ -112,14 +112,9 @@ shinyServer(function(input, output) {
     return(as.numeric(strsplit(input$tx_Contour, ', ')[[1]]))
   })
   
-  ## BASEMAP
-  basemap <- eventReactive(input$ac_UpdateMap, {
-    if (input$rd_nPoints == 'Smooth') {
-      basemap <- CollarMap(df_subset())
-    } else {
-      basemap <- DeviceMapping(df_subset())
-    }
-    return(basemap)
+  # TESTING TEXT OUTPUT
+  output$tx_Conts <- renderText({
+    pct_contour()
   })
   
   ## HOME RANGE ESTIMATION
@@ -149,23 +144,24 @@ shinyServer(function(input, output) {
       hr <- geojson_json(geojson_list(get_ud(bb, 90)) +
                           geojson_list(get_ud(bb, 70)) +
                           geojson_list(get_ud(bb, 50)))
-    } else if (input$sl_HomeRange == 'Select Method') {
-      return(basemap())
     }
-    
-    
-    hr_map <- DeviceMapping_geojson(basemap(), hr)
-    return(hr_map)
+    return(hr)
   })
   
-  # TESTING TEXT OUTPUT
-  output$tx_Conts <- renderText({
-    pct_contour()
+  ## BASEMAP
+  lfMap <- eventReactive(input$ac_UpdateMap, {
+    lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap')
+    
+    if (input$sl_HomeRange == 'Select Method') {
+      lflt %>% mapPoints(move_df())
+    } else {
+      lflt %>% mapPolygons(hr_ud()) %>% mapPoints(move_df())
+    }
   })
   
   # MAP OUTPUT
   output$map <- renderLeaflet({
-    hr_ud()
+    lfMap()
   })
   
 # PAGE 3, MOVEMENT ANALYSIS
