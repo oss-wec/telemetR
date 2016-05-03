@@ -164,6 +164,14 @@ shinyServer(function(input, output) {
     lfMap()
   })
   
+  # SPATIAL DATA OUTPUT
+  output$downloadData <- downloadHandler(
+    filename = function() {paste("CollarData", ".", sep = "")},
+    content = function(file) {
+      write.csv(move_df(), file)
+    }
+  )
+  
 # PAGE 3, MOVEMENT ANALYSIS
   move_plots <- eventReactive(input$ac_RunAnalysis, {
     p <- movement_eda(move_df(), plot_var = input$y.input, type = input$fig.type)
