@@ -10,7 +10,8 @@ CollarMap <- function(dataframe) {
   df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
   unq_id <- unique(df[, ndowid])
   pal <- rep_len(color_pal, length(unq_id))
-  map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap")
+  map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap",
+                                        options = providerTileOptions(attribution = NA))
   
   for (i in 1:length(unq_id)) {
     d <- df_lines[ndowid == unq_id[i]]
@@ -76,7 +77,7 @@ DeviceMapping <- function(dataframe, basemap = "Esri.WorldTopoMap") {
   pal <- rep_len(color_pal, length(unq_id))
   
   device.map <- leaflet() %>% 
-    addProviderTiles(basemap)
+    addProviderTiles(basemap, options = providerTileOptions(attribution = NA))
   layer.group <- list()
   
   for(i in 1:length(unq_id)) {

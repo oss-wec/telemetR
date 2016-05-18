@@ -12,10 +12,10 @@ source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-dat <- fread("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- fread("Collars.csv")
-#dat_animal <- read.csv("Animals.csv")
+#dat <- fread("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+dat <- fread("Collars.csv")
+dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
@@ -150,7 +150,8 @@ shinyServer(function(input, output) {
   
   ## BASEMAP
   lfMap <- eventReactive(input$ac_UpdateMap, {
-    lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap')
+    lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
+                                           options = providerTileOptions(attribution = NA))
     
     if (input$sl_HomeRange == 'Select Method') {
       lflt %>% mapPoints(move_df())
