@@ -169,6 +169,21 @@ get_mud <- function(ud, pct_contour) {
 }
 
 # MOVEMENT ANALYSIS FUNCTIONS
+## alternate coordinate conversion
+xyConv <- function(df, xy = c('long_x', 'lat_y'), CRSin = '+proj=longlat',
+                   CRSout = '+proj=utm +zone=11') {
+  df <- df[complete.cases(df[, xy]), ]
+  conv <- SpatialPoints(cbind('x' = df[, xy[1]],
+                              'y' = df[, xy[2]]),
+                        proj4string = CRS(CRSin))
+  conv <- spTransform(conv, CRS(CRSout))
+  conv <- data.frame(conv)
+  colnames(conv) <- c('x', 'y')
+  df <- cbind(df, conv)
+  
+  return(df)
+}
+
 coord_conv <- function(df, conversion = 'utm') {
   df <- df[complete.cases(df[, .(long_x, lat_y)])]
   conv <- SpatialPoints(cbind(as.numeric(df$long_x), as.numeric(df$lat_y)),
