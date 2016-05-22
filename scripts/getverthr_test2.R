@@ -8,7 +8,7 @@ library(ggplot2)
 library(adehabitatHR)
 library(dplyr)
 
-dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
+dat <- read_csv("data/AllCollars.csv")
 df <- filter(dat, ndowid %in% c('1140', '1139'))
 df <- xyConv(df)
 

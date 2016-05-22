@@ -47,3 +47,64 @@ vud <- getvolumeUD(kud)
 x <- lapply(vud, function(x) getConts(x, c(25, 50, 95)))
 
 y <- lapply(c(25, 50, 95), function(i) getverticeshr(kud, i))
+
+###############################################################################
+# Full Get Conts
+getConts <- function(x, percent)
+{
+  ida <- 'homerange'
+  x<-getvolumeUD(x)
+  xyma <- coordinates(x)
+  xyl <- list(x=unique(xyma[,1]), y=unique(xyma[,2]))
+  ud <- as.image.SpatialGridDataFrame(x[,1])$z
+  
+  re <- contourLines(x = xyl$x, y = xyl$y, ud, 
+                     nlevels = length(percent),
+                     levels = percent)
+  
+  ## identify whether there is a hole in the list:
+  areaa <- unlist(lapply(re, function(y) {
+    ttmp <- cbind(y$x,y$y)
+    ttmp <- rbind(ttmp, ttmp[1,])
+    .arcpspdf(SpatialPolygons(list(Polygons(list(Polygon(ttmp)), 1))))
+  }))
+  
+  spatpol <- do.call("cbind",lapply(1:length(re), function(i) {
+    y <- re[[i]]
+    zz <- cbind(y$x,y$y)
+    zz <- rbind(zz,zz[1,])
+    tmp <- SpatialPolygons(list(Polygons(list(Polygon(zz)),
+                                         as.character(i))))
+    return(!is.na(over(x, tmp)))
+  }))
+  spatpol <- as.data.frame(spatpol)
+  hol <- unlist(lapply(1:ncol(spatpol), function(i) {
+    all(apply(data.frame(spatpol[spatpol[,i],-i]), 1, any))
+  }))
+  areaa <- sum(areaa*sign(as.numeric(!hol)-0.5))
+  
+  ii <- SpatialPolygons(list(Polygons(lapply(1:length(re), function(i) {
+    y <- re[[i]]
+    zz <- cbind(y$x,y$y)
+    zz <- rbind(zz,zz[1,])
+    return((Polygon(zz, hole=hol[i])))
+  }), ida)))
+  
+  dff <- data.frame(id=ida, area=areaa)
+  row.names(dff) <- ida
+  ii <- SpatialPolygonsDataFrame(ii, dff)
+  # if (!is.na(pfs))
+  #   proj4string(ii) <- CRS(pfs)
+  # return(ii)
+}
+
+# get contours for 1 animal: return SpatialPolygonsDataFrame
+x <- getConts(kud[[1]], c(25, 50, 75))
+plot(x)
+
+# get contours for n animals: return list SpatialPolygonsDataFrame
+xx <- lapply(kud, function(x) getConts(x, c(25, 50, 75)))
+plot(xx[[1]])
+plot(xx[[2]])
+plot(xx[[3]])
+plot(xx[[4]])
