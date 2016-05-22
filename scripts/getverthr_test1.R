@@ -101,6 +101,10 @@ getConts <- function(x, percent)
 # get contours for 1 animal: return SpatialPolygonsDataFrame
 x <- getConts(kud[[1]], c(25, 50, 75))
 plot(x)
+x@proj4string <- CRS('+proj=utm +zone=11')
+x <- spTransform(x, CRS('+proj=longlat'))
+gj <- geojsonio::geojson_json(x)
+leaflet() %>% addTiles() %>% addGeoJSON(gj)
 
 # get contours for n animals: return list SpatialPolygonsDataFrame
 xx <- lapply(kud, function(x) getConts(x, c(25, 50, 75)))
@@ -108,3 +112,4 @@ plot(xx[[1]])
 plot(xx[[2]])
 plot(xx[[3]])
 plot(xx[[4]])
+gj <- geojsonio::geojson_json(xx[[1]])
