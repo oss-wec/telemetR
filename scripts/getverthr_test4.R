@@ -1,3 +1,6 @@
+library(sp)
+library(adehabitatHR)
+
 data("puechabonsp")
 dat <- puechabonsp$relocs
 kud <- kernelUD(dat[,1])
@@ -55,8 +58,50 @@ getConts <- function(ud, pct) {
     zz <- rbind(zz, zz[1, ])
     Polygon(zz)
   })
-  return(ply)
+  
+  plys <- SpatialPolygons(list(Polygons(ply, ID = 'ud')))
+  dfid <- data.frame(id = 'ud'); rownames(dfid) <- 'ud'
+  spdf <- SpatialPolygonsDataFrame(plys, dfid)
+  return(spdf)
 }
 
 x <- getConts(kud[[1]], pct = c(25, 50, 75))
-xx <- Polygons(x, ID = 'Brock')
+xx <- lapply(kud, function(x) getConts(x, c(25, 50, 75)))
+
+x@polygons[[1]]@ID
+x@polygons[[1]]@ID <- 'Brock'
+
+names(xx)
+
+for (i in seq_along(xx)) {
+  xx[[i]]@polygons[[1]]@ID <- names(xx)[i]
+  row.names(xx[[i]]@data) <- names(xx)[i]
+}
+print(xx[[1]]@polygons[[1]]@ID); row.names(xx[[1]]@data)
+print(xx[[2]]@polygons[[1]]@ID)
+print(xx[[3]]@polygons[[1]]@ID)
+print(xx[[4]]@polygons[[1]]@ID)
+xreduce <- Reduce(rbind, xx)
+plot(xreduce)
+
+
+## circular data
+
+set.seed(123)
+theta = runif(n <- 300, 0, 2 * pi)
+r = sqrt(runif(n, 0.25^2, 0.5^2))
+xy = data.frame(x = 0.5 + r * cos(theta), y = 0.5 + r * sin(theta), id = rep("a", 300))
+plot(xy[, 1:2])
+spdf <- SpatialPointsDataFrame(coordinates(xy[, 1:2]), xy)
+
+kd <- kernelUD(spdf[, 3])
+image(kd)
+plot(getverticeshr(kd, 75), add = T)
+xx <- getConts(kd, 75)
+
+x <- getvolumeUD(kd)
+xyma <- coordinates(x[[1]])
+xyl <- list(x = unique(xyma[, 1]), y = unique(xyma[, 2]))
+z <- as.image.SpatialGridDataFrame(x[[1]][, 1])$z
+re <- contourLines(x = xyl$x, y = xyl$y, z,
+                   nlevels = 1, levels = 75)
