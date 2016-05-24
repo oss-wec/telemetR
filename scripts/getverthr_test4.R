@@ -104,4 +104,4 @@ xyma <- coordinates(x[[1]])
 xyl <- list(x = unique(xyma[, 1]), y = unique(xyma[, 2]))
 z <- as.image.SpatialGridDataFrame(x[[1]][, 1])$z
 re <- contourLines(x = xyl$x, y = xyl$y, z,
-                   nlevels = 1, levels = 75)
+                   nlevels = 2, levels = c(50, 75))
