@@ -59,10 +59,10 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       #             choices = c('Google - KML', 'ESRI - Shapefile'),
                       #             selected = 'Google - KML'),
                       # downloadButton('dl_Shape', 'Download Polygon'),
-                      hr()
+                      hr(),
                       # textInput('tx_ErrPoints', 'Remove Erroneous Points', placeholder = 'Enter LocID to remove point'),
                       # hr(),
-                      # textOutput('tx_Conts')
+                      textOutput('tx_Conts')
                       )
     )
   ),

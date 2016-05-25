@@ -283,3 +283,32 @@ mapPolygons <- function(map, geojson) {
   }
   return(map)
 }
+
+## function to get contours from kernel density estimates
+getContours <- function(ud, pct) {
+  ids <- as.character(pct)
+  x <- getvolumeUD(ud)
+  xyma <- coordinates(x)
+  xyl <- list(x = unique(xyma[, 1]), y = unique(xyma[, 2]))
+  z <- as.image.SpatialGridDataFrame(x[, 1])$z
+  
+  cl <- lapply(pct, function(x) { 
+    contourLines(x = xyl$x, y = xyl$y, z, nlevels = 1, levels = x)
+  })
+  
+  plys <- lapply(seq_along(cl), function(i) {
+    Polygons(lapply(seq_along(cl[[i]]), function(j) {
+      m <- cl[[i]][[j]]
+      ply <- cbind(m$x, m$y)
+      ply <- rbind(ply, ply[1, ])
+      Polygon(ply)
+    }), ID = ids[i])
+  })
+  
+  plys <- lapply(plys, function(x) checkPolygonsHoles(x))
+  splys <- SpatialPolygons(plys)
+  dff <- data.frame(id = ids)
+  row.names(dff) <- ids
+  spdf <- SpatialPolygonsDataFrame(splys, dff)
+  return(spdf)
+}

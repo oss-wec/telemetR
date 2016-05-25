@@ -8,21 +8,23 @@ library(ggplot2, verbose = FALSE)
 library(sp, verbose = FALSE)
 library(adehabitatHR, verbose = FALSE)
 library(fasttime, verbose = FALSE)
+library(maptools)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-dat <- fread("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- fread("Collars.csv")
-#dat_animal <- read.csv("Animals.csv")
+#dat <- fread("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+dat <- fread("Collars.csv")
+dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 
 shinyServer(function(input, output) {
 
-  # PAGE 1 LOGIC
+# PAGE 1 LOGIC
+  ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal[dat_animal$spid == input$sl_species, 
                      c(2, 1, 4, 3, 7, 8, 5)]
@@ -35,12 +37,12 @@ shinyServer(function(input, output) {
               class = "cell-border stripe")
   })
   
-  # PREVIEW MAP, EVERY 20 LOCATIONS
+  ## preview map, shows every 20 locations for selected input
   output$preview <- renderLeaflet({ 
       CollarMap(df_subset())
     })
 
-  # LIST OF NDOW IDS TO SUBSET DATAFRAME
+  ## list of NDOW IDs to subset dataframe 
   id_list <- reactive({
     return(as.numeric(strsplit(input$tx_ndowid, ', ')[[1]]))
   })
@@ -101,7 +103,7 @@ shinyServer(function(input, output) {
                dt = move.dt(timestamp)), by = ndowid]
     df[, ':=' (sig.dist = cumsum(dist),
                speed = move.speed(dist, dt)), by = ndowid]
-    p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
+    #p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
     #return(list(df, p))
     return(df)
   })
@@ -114,7 +116,8 @@ shinyServer(function(input, output) {
   
   # TESTING TEXT OUTPUT
   output$tx_Conts <- renderText({
-    pct_contour()
+    class(pct_contour())
+    print(as.character(pct_contour()))
   })
   
   ## HOME RANGE ESTIMATION
@@ -137,7 +140,8 @@ shinyServer(function(input, output) {
       coordinates(kd) <- kd[, .(x, y)]
       kd@proj4string <- CRS('+proj=utm +zone=11')
       kd <- kernelUD(kd[, 2], h = 'href')
-      hr <- get_mud(kd, pct_contour())
+      hr <- getContours(kd, pct_contour)
+      hr <- lapply(geojson_json(hr))
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)

@@ -52,7 +52,7 @@ tst <- getContours(kud[[1]], c(25, 50, 75, 95))
 tst$COLOR <- viridis::viridis(nrow(tst@data))
 plot(tst, col = tst$COLOR, border = NA)
 
-## TEST OVER MULTIPLE ANIMALS
+## TEST OVER MULTIPLE IDS
 x2 <- c(xy$x, xy$x + .75, xy$x + .75, xy$x)
 y2 <- c(xy$y, xy$y, xy$y + .75, xy$y + .75)
 xy <- data.frame(x = x2, y = y2)
@@ -70,3 +70,41 @@ tst_mult <- lapply(kud, function(x) getContours(x, c(25, 50, 75, 95)))
 sapply(1:5, function(i) {
   plot(tst_mult[[i]], col = viridis::viridis(4))
 })
+
+## TEST CONVERT TO GEOJSON
+gjl <- lapply(tst_mult, function(x) geojsonio::geojson_json(x))
+
+## REDUCE TO ONE SPATIALPOLYGONSDATAFRAME
+nm <- names(tst_mult)
+for(i in seq_along(tst_mult)) {
+  row.names(tst_mult[[i]]) <- paste(nm[i], row.names(tst_mult[[i]]))
+  print(row.names(tst_mult[[i]]))
+}
+sdf_poly <- Reduce(rbind, tst_mult)
+plot(sdf_poly, col = viridis::viridis(4))
+writePolyShape(sdf_poly, 'testShapeExport')
+
+## TEST WITH REAL DATA
+df <- read_csv('data/CollarData 2.csv')
+dat <- SpatialPointsDataFrame(coordinates(cbind(df[, 5:6])), as.data.frame(df),
+                              proj4string = CRS('+init=epsg:4326'))
+plot(dat, pch = 21, cex = .5)
+head(dat[, 3])
+
+kd <- kernelUD(dat[, 3])
+udply <- lapply(kd, function(x) getContours(x, c(25, 50, 75)))
+sapply(1:length(udply), function(i) {
+  plot(udply[[i]], col = viridis::viridis(3))
+})
+
+correctIDs <- function(contour) {
+  nm <- names(contour)
+  for(i in seq_along(contour)) {
+    row.names(contour[[i]]) <- paste(nm[i], row.names(contour[[i]]))
+    print(row.names(contour[[i]]))
+  }
+  return(contour)
+}
+udply <- correctIDs(udply)
+ex <- Reduce(rbind, udply)
+plot(ex, col = viridis(3))
