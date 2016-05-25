@@ -13,10 +13,10 @@ source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-#dat <- fread("S:/MGritts/telemetR/Collars.csv")
-#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-dat <- fread("Collars.csv")
-dat_animal <- read.csv("Animals.csv")
+dat <- fread("S:/MGritts/telemetR/Collars.csv")
+dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+#dat <- fread("Collars.csv", nrows = 1000000)
+#dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
@@ -116,8 +116,7 @@ shinyServer(function(input, output) {
   
   # TESTING TEXT OUTPUT
   output$tx_Conts <- renderText({
-    class(pct_contour())
-    print(as.character(pct_contour()))
+    dput(as.character(pct_contour()))
   })
   
   ## HOME RANGE ESTIMATION
@@ -136,12 +135,11 @@ shinyServer(function(input, output) {
       }
       names(hr) <- ids
     } else if (input$sl_HomeRange == 'Kernel Density') {
-      kd <- move_df()
-      coordinates(kd) <- kd[, .(x, y)]
-      kd@proj4string <- CRS('+proj=utm +zone=11')
-      kd <- kernelUD(kd[, 2], h = 'href')
-      hr <- getContours(kd, pct_contour)
-      hr <- lapply(geojson_json(hr))
+      kd <- SpatialPointsDataFrame(coordinates(cbind(move_df()$long_x, move_df()$lat_y)), data = move_df(),
+                                   proj4string = CRS('+proj=longlat'))
+      kd <- kernelUD(kd[, 2])
+      hr <- lapply(kd, function(x) getContours(x, pct_contour()))
+      hr <- lapply(hr, function(x) geojson_json(x))
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
