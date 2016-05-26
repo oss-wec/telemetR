@@ -312,3 +312,12 @@ getContours <- function(ud, pct) {
   spdf <- SpatialPolygonsDataFrame(splys, dff)
   return(spdf)
 }
+
+bbBugFix <- function(bb) {
+  if (class(bb) == 'estUDm') {
+    v <- bb
+  } else {
+    v <- list(bb)
+  }
+  return(v)
+}

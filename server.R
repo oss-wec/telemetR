@@ -143,15 +143,12 @@ shinyServer(function(input, output) {
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
-      if (class(bb) == 'estUD') {
-        bb <- list(bb)
-      }
-      for (i in seq_along(bb)) {
-        bb[[i]]@proj4string <- CRS('+init=epsg:26911')
-        bb[[i]] <- spTransform(bb[[i]], CRS('+init=epsg:4326'))
-        print(class(bb[[i]]))
-      }
+      bb <- bbBugFix(bb)
       hr <- lapply(bb, function(x) getContours(x, pct_contour()))
+      for (i in seq_along(bb)) {
+        hr[[i]]@proj4string <- CRS('+init=epsg:26911')
+        hr[[i]] <- spTransform(hr[[i]], CRS('+init=epsg:4326'))
+      }
       hr <- lapply(hr, function(x) geojson_json(x))
     }
     return(hr)

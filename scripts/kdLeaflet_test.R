@@ -20,12 +20,35 @@ lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
 lflt %>% mapPolygons(hr) %>% mapPoints(df)
 
 ## brownian bridge
-traj <- to_ltraj(df)
+traj <- to_ltraj(df); traj1 <- dplyr::filter(df, ndowid == 2630) %>% to_ltraj
 bb <- estimate_bbmm(traj)
-if (class(bb) == 'estUD') {
-  bb <- list(bb)
-  return(bb)
+bb1 <- estimate_bbmm(traj1)
+
+length(bb); length(bb1)
+class(bb); class(bb1)
+
+if (class(bb) == 'estUDm') {
+  print('list of UDs')
+} else {
+  print('single UD')
 }
+
+bbBugFix <- function(bb) {
+  if (class(bb) == 'estUDm') {
+    v <- bb
+  } else {
+    v <- list(bb)
+  }
+  return(v)
+}
+
+tst <- bbBugFix(bb1)
+
+
+
+
+
+
 hr <- lapply(bb, function(x) getContours(x, c(80, 95)))
 for (i in seq_along(hr)) {
   hr[[i]]@proj4string <- CRS('+proj=utm +zone=11')
