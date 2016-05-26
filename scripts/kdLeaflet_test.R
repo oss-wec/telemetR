@@ -3,9 +3,10 @@ library(adehabitatHR)
 library(maptools)
 library(geojsonio)
 library(leaflet)
+source('global.R')
 
 dat <- fread('Collars.csv')
-df <- dat[ndowid %in% c(2630, 2648)]
+df <- dat[ndowid %in% c(2648, 2630)]
 df <- coord_conv(df)
 
 kd <- SpatialPointsDataFrame(coordinates(cbind(df$long_x, df$lat_y)), data = df,
@@ -21,6 +22,10 @@ lflt %>% mapPolygons(hr) %>% mapPoints(df)
 ## brownian bridge
 traj <- to_ltraj(df)
 bb <- estimate_bbmm(traj)
+if (class(bb) == 'estUD') {
+  bb <- list(bb)
+  return(bb)
+}
 hr <- lapply(bb, function(x) getContours(x, c(80, 95)))
 for (i in seq_along(hr)) {
   hr[[i]]@proj4string <- CRS('+proj=utm +zone=11')
@@ -30,3 +35,5 @@ hr <- lapply(hr, function(x) geojson_json(x))
 lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                        options = providerTileOptions(attribution = NA))
 lflt %>% mapPolygons(hr) %>% mapPoints(df)
+
+

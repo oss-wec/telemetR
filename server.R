@@ -13,10 +13,10 @@ source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
 #dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
-dat <- fread("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- fread("Collars.csv", nrows = 1000000)
-#dat_animal <- read.csv("Animals.csv")
+#dat <- fread("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+dat <- fread("Collars.csv")
+dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
@@ -143,9 +143,16 @@ shinyServer(function(input, output) {
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
-      hr <- geojson_json(geojson_list(get_ud(bb, 90)) +
-                          geojson_list(get_ud(bb, 70)) +
-                          geojson_list(get_ud(bb, 50)))
+      if (class(bb) == 'estUD') {
+        bb <- list(bb)
+      }
+      for (i in seq_along(bb)) {
+        bb[[i]]@proj4string <- CRS('+init=epsg:26911')
+        bb[[i]] <- spTransform(bb[[i]], CRS('+init=epsg:4326'))
+        print(class(bb[[i]]))
+      }
+      hr <- lapply(bb, function(x) getContours(x, pct_contour()))
+      hr <- lapply(hr, function(x) geojson_json(x))
     }
     return(hr)
   })
