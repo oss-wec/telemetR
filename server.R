@@ -9,6 +9,7 @@ library(sp, verbose = FALSE)
 library(adehabitatHR, verbose = FALSE)
 library(fasttime, verbose = FALSE)
 library(maptools)
+library(shinyjs)
 source("global.R")
 
 #dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
@@ -85,7 +86,7 @@ shinyServer(function(input, output) {
             ))
       })
 
-  # PAGE 1, CLEAR INPUT
+  # CLEAR INPUT FOR PREVIEW MAP
   observeEvent(input$ac_reset, {
     shinyjs::reset("tx_ndowid")
     shinyjs::reset("sl_dates")
@@ -139,7 +140,9 @@ shinyServer(function(input, output) {
                                    proj4string = CRS('+proj=longlat'))
       kd <- kernelUD(kd[, 2])
       hr <- lapply(kd, function(x) getContours(x, pct_contour()))
-      hr <- lapply(hr, function(x) geojson_json(x))
+      
+      ## spdf to geojson, wrapping this in an event reactive
+      #hr <- lapply(hr, function(x) geojson_json(x))
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
       bb <- to_ltraj(move_df())
       bb <- estimate_bbmm(bb)
@@ -149,20 +152,27 @@ shinyServer(function(input, output) {
         hr[[i]]@proj4string <- CRS('+init=epsg:26911')
         hr[[i]] <- spTransform(hr[[i]], CRS('+init=epsg:4326'))
       }
-      hr <- lapply(hr, function(x) geojson_json(x))
+      
+      ## spdf to geojson, wrapping this in an event reactive
+      #hr <- lapply(hr, function(x) geojson_json(x))
     }
     return(hr)
   })
-
+  
   ## BASEMAP
   lfMap <- eventReactive(input$ac_UpdateMap, {
+    hr <- hr_ud()
+    if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
+      hr <- lapply(hr, function(x) geojson_json(x))
+    }
+    
     lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                            options = providerTileOptions(attribution = NA))
 
     if (input$sl_HomeRange == 'Select Method') {
       lflt %>% mapPoints(move_df())
     } else {
-      lflt %>% mapPolygons(hr_ud()) %>% mapPoints(move_df())
+      lflt %>% mapPolygons(hr) %>% mapPoints(move_df())
     }
   })
 
@@ -170,7 +180,34 @@ shinyServer(function(input, output) {
   output$map <- renderLeaflet({
     lfMap()
   })
-
+  
+  # SHAPEFILE OUTPUT
+  output$dl_Shape <- downloadHandler(
+    filename = function() 'UtlzDist_Export.zip',
+    content = function(file) {
+      if (length(Sys.glob('UtlzDist_shp.*')) > 0){
+        file.remove(Sys.glob('UtlzDist_shp.*'))
+      }
+      shpOut <- correctIDs(hr_ud())
+      shpOut <- Reduce(rbind, shpOut)
+      writePolyShape(shpOut, 'UtlzDist_shp')
+      zip(zipfile = 'UtlzDist_Export.zip', files = Sys.glob('UtlzDist_shp.*'))
+      file.copy('UtlzDist_Export.zip', file)
+      if(length(Sys.glob('UtlzDist_shp.*')) > 0){
+        file.remove(Sys.glob('UtlzDist_shp.*'))
+      }
+    }
+  )
+  
+  # HIDE POLYGON OUTPUT IF MCP IS USED
+  observeEvent(input$sl_HomeRange, {
+    if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
+      shinyjs::show('dl_Shape')
+    } else {
+      shinyjs::hide('dl_Shape')
+    }
+  })
+  
   # SPATIAL DATA OUTPUT
   output$downloadData <- downloadHandler(
     filename = function() {paste("CollarData", ".", sep = "")},

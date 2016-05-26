@@ -2,9 +2,11 @@ library(shiny)
 library(shinyjs)
 library(leaflet)
 
-shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
+shinyUI(tagList(
+  useShinyjs(),
+  navbarPage("NDOW GPS Collar", id = "nav",
 # PAGE 1, SUBSET DATA   
-    tabPanel("Collared Animals", useShinyjs(), div(class = "pg1",
+    tabPanel("Collared Animals", div(class = "pg1",
             fluidRow(h2("Filter Data"),
                      column(3,
                             selectInput("sl_species", "Species",
@@ -58,10 +60,8 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
                       # selectInput('sl_Output', 'Output File Format',
                       #             choices = c('Google - KML', 'ESRI - Shapefile'),
                       #             selected = 'Google - KML'),
-                      # downloadButton('dl_Shape', 'Download Polygon'),
+                      downloadButton('dl_Shape', 'Download Polygon'),
                       hr(),
-                      # textInput('tx_ErrPoints', 'Remove Erroneous Points', placeholder = 'Enter LocID to remove point'),
-                      # hr(),
                       textOutput('tx_Conts')
                       )
     )
@@ -92,3 +92,4 @@ shinyUI(navbarPage("NDOW GPS Collar", id = "nav",
            hr(),
            DT::dataTableOutput("collar.table"))
 ))
+)

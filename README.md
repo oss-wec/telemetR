@@ -1,5 +1,5 @@
 # telemetR
-*0.80.4*
+*0.85.0*
 
 A Shiny application for the exploratory analysis and visualization of animal movement.
 

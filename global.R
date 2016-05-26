@@ -313,6 +313,16 @@ getContours <- function(ud, pct) {
   return(spdf)
 }
 
+## rewrites Spatial*DataFrame names, input must be a list. Facilitates merging into a single S*DataFrame
+correctIDs <- function(contour) {
+  nm <- names(contour)
+  for(i in seq_along(contour)) {
+    row.names(contour[[i]]) <- paste(nm[i], row.names(contour[[i]]))
+    print(row.names(contour[[i]]))
+  }
+  return(contour)
+}
+
 bbBugFix <- function(bb) {
   if (class(bb) == 'estUDm') {
     v <- bb

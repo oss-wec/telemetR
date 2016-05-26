@@ -19,6 +19,13 @@ lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                        options = providerTileOptions(attribution = NA))
 lflt %>% mapPolygons(hr) %>% mapPoints(df)
 
+## shapefile export
+hr <- correctIDs(hr)
+shpOut <- Reduce(rbind, hr)
+shpOut@proj4string <- CRS('+init=epsg:4326')
+writePolyShape(shpOut, 'testShp_out')
+
+
 ## brownian bridge
 traj <- to_ltraj(df); traj1 <- dplyr::filter(df, ndowid == 2630) %>% to_ltraj
 bb <- estimate_bbmm(traj)
@@ -43,12 +50,6 @@ bbBugFix <- function(bb) {
 }
 
 tst <- bbBugFix(bb1)
-
-
-
-
-
-
 hr <- lapply(bb, function(x) getContours(x, c(80, 95)))
 for (i in seq_along(hr)) {
   hr[[i]]@proj4string <- CRS('+proj=utm +zone=11')
