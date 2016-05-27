@@ -1,19 +1,19 @@
-library(shiny, verbose = FALSE)
-library(leaflet, verbose = FALSE)
-library(data.table, verbose = FALSE)
-library(gridExtra, verbose = FALSE)
-library(geojsonio, verbose = FALSE)
-library(lubridate, verbose = FALSE)
-library(ggplot2, verbose = FALSE)
-library(sp, verbose = FALSE)
-library(adehabitatHR, verbose = FALSE)
-library(fasttime, verbose = FALSE)
+library(shiny)
+library(leaflet)
+library(data.table)
+library(gridExtra)
+library(geojsonio)
+library(lubridate)
+library(ggplot2)
+library(sp)
+library(adehabitatHR)
+library(fasttime)
 library(maptools)
 library(shinyjs)
+library(dplyr)
+library(magrittr)
 source("global.R")
 
-#dat <- fread("V:/ActiveProjects/Game/BGDB/Collars.csv", encoding = "UTF-8")
-#dat_animal <- read.csv("V:/ActiveProjects/Game/BGDB/Animals.csv")
 dat <- fread("S:/MGritts/telemetR/Collars.csv")
 dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
 #dat <- fread("Collars.csv")
@@ -21,10 +21,39 @@ dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
+mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
 # PAGE 1 LOGIC
+  ## enable/disable mgmt area based on species input
+  observeEvent(input$sl_species, {
+    if (input$sl_species == 'MULD') {
+      shinyjs::enable('sl_mgmtarea')
+    } else {
+      shinyjs::disable('sl_mgmtarea')
+    }
+  })
+  
+  ## update select input for mgmt area
+  updateSelectInput(session, 'sl_mgmtarea', choices = mgmtList, selected = '19')
+  
+  ## update selectize input for slz_ndowid
+  ndowList <- reactive({
+    if (input$sl_species == 'MULD') {
+      l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+        select(ndowid) %>% extract2(1) %>% unique() %>% sort()
+    } else {
+      l <- dat_animal %>% filter(spid == input$sl_species) %>% 
+        select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
+    }
+    return(l)
+  })
+  observeEvent(input$sl_species, {
+    updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
+  })
+  
+  
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal[dat_animal$spid == input$sl_species,
@@ -44,20 +73,20 @@ shinyServer(function(input, output) {
     })
 
   ## list of NDOW IDs to subset dataframe
-  id_list <- reactive({
-    return(as.numeric(strsplit(input$tx_ndowid, ', ')[[1]]))
-  })
+  # id_list <- reactive({
+  #   return(as.numeric(strsplit(input$tx_ndowid, ', ')[[1]]))
+  # })
 
   # DATAFRAME SUBSET BY SELECTED SPECIES, MGMT AREA, ID, DATE
   df_subset <- reactive({
-    if (is.null(input$tx_ndowid) | input$tx_ndowid == "") {
+    if (is.null(input$slz_ndowid) | '' %in% input$slz_ndowid) {
       df <- dat[species == input$sl_species, ]
       if (input$sl_species == "MULD") {
         df <- df[mgmtarea == input$sl_mgmtarea, ]
       }
     } else {
       df <- dat[species == input$sl_species &
-                ndowid %in% id_list(), ]
+                ndowid %in% as.numeric(input$slz_ndowid), ]
       if (input$ck_date == TRUE) {
         df <- df[timestamp >= as.POSIXct(input$sl_dates[1]) &
                  timestamp <= as.POSIXct(input$sl_dates[2]), ]
