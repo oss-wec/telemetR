@@ -78,7 +78,7 @@ shinyUI(tagList(
                                       selected = "point"),
                           selectInput("y.input", "Y Axis", 
                                       choices = c("dist", "R2n", "sig.dist", "speed", "dt")),
-                          actionButton("ac_RunAnalysis", "Run Anlysis")),
+                          actionButton("ac_RunAnalysis", "Create Graphs")),
              mainPanel(
                plotOutput("move.plot", width = "100%", height = 700),
                tableOutput("move.table")

@@ -18,7 +18,7 @@ coord_conv <- function(df, conversion = 'utm') {
   return(df)
 }
 
-dat <- fread("S:/MGritts/telemetR/Collars.csv")
+dat <- fread("Collars.csv")
 df <- dat[ndowid == 1139]
 df <- coord_conv(df)
 df[, R2n := move.r2n(x, y)]
