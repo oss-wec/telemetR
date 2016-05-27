@@ -52,7 +52,9 @@ shinyServer(function(input, output, session) {
   observeEvent(input$sl_species, {
     updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
   })
-  
+  observeEvent(input$sl_mgmtarea, {
+    updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
+  })
   
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
