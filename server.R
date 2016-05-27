@@ -227,7 +227,8 @@ shinyServer(function(input, output, session) {
       if(length(Sys.glob('UtlzDist_shp.*')) > 0){
         file.remove(Sys.glob('UtlzDist_shp.*'))
       }
-    }
+    },
+    contentType = 'application/zip'
   )
   
   # HIDE POLYGON OUTPUT IF MCP IS USED
