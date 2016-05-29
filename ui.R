@@ -81,7 +81,7 @@ shinyUI(tagList(
                           actionButton("ac_RunAnalysis", "Create Graphs")),
              mainPanel(
                plotOutput("move.plot", width = "100%", height = 700),
-               tableOutput("move.table")
+               highcharter::highchartOutput('nsdTimeSeries')
                )
              )),
 

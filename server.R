@@ -12,6 +12,7 @@ library(maptools)
 library(shinyjs)
 library(dplyr)
 library(magrittr)
+library(highcharter)
 source("global.R")
 
 #dat <- fread("S:/MGritts/telemetR/Collars.csv")
@@ -24,7 +25,7 @@ dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
-
+  
 # PAGE 1 LOGIC
   ## enable/disable mgmt area based on species input
   observeEvent(input$sl_species, {
@@ -255,6 +256,11 @@ shinyServer(function(input, output, session) {
   })
   output$move.plot <- renderPlot({
     move_plots()
+  })
+  
+  output$nsdTimeSeries <- highcharter::renderHighchart({
+    highchart() %>% 
+      hc_add_series_times_values(dates = as.Date(move_df()$timestamp), values = move_df()$R2n)
   })
 
   # PAGE 4
