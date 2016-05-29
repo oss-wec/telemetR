@@ -6,9 +6,8 @@ shinyUI(tagList(
   useShinyjs(),
   navbarPage("NDOW GPS Collar", id = "nav",
 # PAGE 1, SUBSET DATA   
-    tabPanel("Collared Animals", div(class = "pg1",
-            fluidRow(h2("Filter Data"),
-                     column(3,
+    tabPanel('Preview', div(class = "pg1",
+            fluidRow(column(3, h2('Filter Data'),
                             selectInput("sl_species", "Species",
                                         unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
                                         ),
@@ -69,21 +68,25 @@ shinyUI(tagList(
   ),
 
 # PAGE 3, MOVEMENT ANALYSIS  
-  tabPanel("Movement", 
-           sidebarLayout(
-             sidebarPanel(h2("Movement Analysis"),
-                          h3("Input Panel"),
-                          selectInput("fig.type", "Figure Type",
-                                      choices = c("point", "line", "histogram"),
-                                      selected = "point"),
-                          selectInput("y.input", "Y Axis", 
-                                      choices = c("dist", "R2n", "sig.dist", "speed", "dt")),
-                          actionButton("ac_RunAnalysis", "Create Graphs")),
-             mainPanel(
-               plotOutput("move.plot", width = "100%", height = 700),
-               highcharter::highchartOutput('nsdTimeSeries')
-               )
-             )),
+  tabPanel("Movement",
+           fluidRow(column(3,
+                           selectInput('fig.type', 'Figure Type',
+                                       choices = c('point', 'line', 'histogram'),
+                                       selected = 'point'),
+                           selectInput("y.input", "Y Axis", 
+                                       choices = c("dist", "R2n", "sig.dist", "speed", "dt"))
+                           ),
+                    column(3, br(), br(), br(), br(), br(),
+                           actionButton('ac_RunAnalysis', 'Create Graphs', color = 'blue'))
+                    ),
+           fluidRow(
+             plotOutput('move.plot', width = '100%', height = 600)
+           ),
+           hr(),
+           fluidRow(
+             highcharter::highchartOutput('nsdTimeSeries')
+           )
+          ),
 
 # PAGE 4, DATA EXPORT  
   tabPanel("Data",
