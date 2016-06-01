@@ -15,10 +15,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-#dat <- fread("S:/MGritts/telemetR/Collars.csv")
-#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-dat <- fread("Collars.csv")
-dat_animal <- read.csv("Animals.csv")
+dat <- fread("S:/MGritts/telemetR/Collars.csv")
+dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+#dat <- fread("Collars.csv")
+#dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
