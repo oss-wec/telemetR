@@ -30,6 +30,7 @@ install.packages("fasttime")
 install.packages("ggthemes")
 install.packages("maptools")
 install.packages("magrittr")
+install.packages("highcharter")
 ```
 
 I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses. If the application errors on startup due to an uninstalled package, the R console will inform which packages needs to be installed. Install the package with the `install.packages('package name')` function call.

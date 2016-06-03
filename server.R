@@ -15,10 +15,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- fread("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- fread("Collars.csv")
-#dat_animal <- read.csv("Animals.csv")
+#dat <- fread("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
+dat <- fread("Collars.csv")
+dat_animal <- read.csv("Animals.csv")
 dat$timestamp <- dat[, fastPOSIXct(timestamp)]
 
 dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
@@ -60,7 +60,7 @@ shinyServer(function(input, output, session) {
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal[dat_animal$spid == input$sl_species,
-                     c(2, 1, 4, 3, 7, 8, 5)]
+                     c(2, 1, 5, 4, 8, 9, 6)]
     if (input$sl_species == "MULD") {
       df <- df[df$mgmtarea == input$sl_mgmtarea, ]
     }
@@ -120,7 +120,7 @@ shinyServer(function(input, output, session) {
 
   # CLEAR INPUT FOR PREVIEW MAP
   observeEvent(input$ac_reset, {
-    shinyjs::reset("tx_ndowid")
+    shinyjs::reset("slz_ndowid")
     shinyjs::reset("sl_dates")
     shinyjs::reset("ck_date")
   })
@@ -259,8 +259,21 @@ shinyServer(function(input, output, session) {
   })
   
   output$nsdTimeSeries <- highcharter::renderHighchart({
-    highchart() %>% 
-      hc_add_series_times_values(dates = as.Date(move_df()$timestamp), values = move_df()$R2n)
+    df <- move_df() %>% 
+      arrange(ndowid, timestamp) %>% 
+      group_by(ndowid) %>% 
+      mutate(nsd = move.r2n(x, y),
+             ts = date(timestamp)) %>% 
+      group_by(ndowid, ts) %>% 
+      slice(1)
+    ids <- df %>% select(ndowid) %>% extract2('ndowid') %>% unique()
+    
+    hc <- highchart()
+    for(i in seq_along(ids)) {
+      d <- df %>% filter(ndowid == ids[i])
+      hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, color = color_pal[i])
+    }
+    hc
   })
 
   # PAGE 4

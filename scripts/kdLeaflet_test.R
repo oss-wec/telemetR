@@ -3,14 +3,17 @@ library(adehabitatHR)
 library(maptools)
 library(geojsonio)
 library(leaflet)
+library(readr)
+library(dplyr)
 source('global.R')
 
-dat <- fread('Collars.csv')
-df <- dat[ndowid %in% c(2648, 2630)]
-df <- coord_conv(df)
-
+dat <- read_csv('../CollarData (12).csv')
+df <- xyConv(dat)
 kd <- SpatialPointsDataFrame(coordinates(cbind(df$long_x, df$lat_y)), data = df,
                              proj4string = CRS('+proj=longlat'))
+plot(kd, pch = 21, cex = .5)
+
+
 kd <- kernelUD(kd[, 2])
 hr <- lapply(kd, function(x) getContours(x, c(50, 90)))
 hr <- lapply(hr, function(x) geojson_json(x))

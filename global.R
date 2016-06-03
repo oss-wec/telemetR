@@ -173,8 +173,8 @@ get_mud <- function(ud, pct_contour) {
 xyConv <- function(df, xy = c('long_x', 'lat_y'), CRSin = '+proj=longlat',
                    CRSout = '+proj=utm +zone=11') {
   df <- df[complete.cases(df[, xy]), ]
-  conv <- SpatialPoints(cbind('x' = df[, xy[1]],
-                              'y' = df[, xy[2]]),
+  conv <- SpatialPoints(coordinates(cbind('x' = df[, xy[1]],
+                              'y' = df[, xy[2]])),
                         proj4string = CRS(CRSin))
   conv <- spTransform(conv, CRS(CRSout))
   conv <- data.frame(conv)
@@ -200,8 +200,13 @@ move.dist <- function(x, y) {
   return(dist)
 }
 
+# move.r2n <- function(x, y) {
+#   r2n <- (x - x[1])**2 + (y - y[1])**2
+#   return(r2n)
+# }
 move.r2n <- function(x, y) {
   r2n <- (x - x[1])**2 + (y - y[1])**2
+  r2n <- (r2n - min(r2n)) / (max(r2n) - min(r2n))
   return(r2n)
 }
 
