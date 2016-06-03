@@ -29,7 +29,7 @@ highchart() %>%
   hc_add_series_times_values(dates = as.Date(d3$timestamp), values = d3$nsd, color = color_pal[3])
 
 ## all together now
-df <- dat %>% filter(ndowid %in% c(1135:1145))
+df <- dat %>% filter(ndowid %in% c(1135:1136))
 df <- coord_conv(df)
 df$timestamp <- lubridate::ymd_hms(df$timestamp)
 
@@ -45,6 +45,5 @@ ids <- df %>% select(ndowid) %>% extract2('ndowid') %>% unique()
 hc <- highchart()
 for(i in seq_along(ids)) {
   d <- df %>% filter(ndowid == ids[i])
-  hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, color = color_pal[i])
+  hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, color = color_pal[i], name = ids[i])
 }
-hc

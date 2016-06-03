@@ -258,6 +258,12 @@ shinyServer(function(input, output, session) {
     move_plots()
   })
   
+  observeEvent(input$slz_ndowid, {
+    # if (is.null(input$slz_ndowid) | '' %in% input$slz_ndowid) {
+    ids <- input$slz_ndowid 
+    updateSelectizeInput(session, 'slz_nsdID', choices = ids, selected = ids[1])
+  })
+  
   output$nsdTimeSeries <- highcharter::renderHighchart({
     df <- move_df() %>% 
       arrange(ndowid, timestamp) %>% 
@@ -266,12 +272,13 @@ shinyServer(function(input, output, session) {
              ts = date(timestamp)) %>% 
       group_by(ndowid, ts) %>% 
       slice(1)
-    ids <- df %>% select(ndowid) %>% extract2('ndowid') %>% unique()
     
+    ids <- input$slz_nsdID
     hc <- highchart()
     for(i in seq_along(ids)) {
       d <- df %>% filter(ndowid == ids[i])
-      hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, color = color_pal[i])
+      hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, 
+                                       color = color_pal[i], name = ids[i])
     }
     hc
   })

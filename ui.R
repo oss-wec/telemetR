@@ -84,6 +84,14 @@ shinyUI(tagList(
            ),
            hr(),
            fluidRow(
+             column(3, 
+                    selectizeInput('slz_nsdID', 'Select ID', choices = NULL, multiple = TRUE)),
+             column(4,
+                    p('Choose animals to display in the figure below. Multiple selections are supported. 
+                      Net Squared Displacement is a metric used to classify movement strategies. The 
+                      are transformed to be between 0 and 1.'))
+           ),
+           fluidRow(
              highcharter::highchartOutput('nsdTimeSeries')
            )
           ),
