@@ -261,7 +261,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$slz_ndowid, {
     # if (is.null(input$slz_ndowid) | '' %in% input$slz_ndowid) {
     ids <- input$slz_ndowid 
-    updateSelectizeInput(session, 'slz_nsdID', choices = ids, selected = ids[1])
+    updateSelectizeInput(session, 'slz_nsdID', choices = sort(ids), selected = ids[1])
   })
   
   output$nsdTimeSeries <- highcharter::renderHighchart({

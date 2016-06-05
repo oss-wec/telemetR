@@ -234,7 +234,7 @@ movement_eda <- function(dat, plot_var, type = 'line') {
   } else if (type == 'point'){
     p <- p + geom_point(aes_string(x = 'timestamp', y = plot_var), size = 1.5)
   }
-  p <- p + facet_wrap(~ndowid, scales = 'free', ncol = 1) +
+  p <- p + facet_wrap(~ndowid, scales = 'free') +
     scale_color_manual(values = pal) + 
     scale_fill_manual(values = pal) +
     theme(panel.background = element_rect(fill = 'white'),
