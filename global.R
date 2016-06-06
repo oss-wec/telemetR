@@ -6,7 +6,7 @@ color_pal <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6",
 
 # MAPPING FUNCTIONS
 ## map collar data on page one. One point per day for lines, First, and Last point
-CollarMap_dplyr <- function(dataframe) {
+CollarMap <- function(dataframe) {
   df <- dataframe %>% 
     filter(!(is.na(long_x) | is.na(lat_y))) %>% 
     arrange(ndowid, timestamp) %>% 
@@ -14,7 +14,7 @@ CollarMap_dplyr <- function(dataframe) {
     slice(1) %>% 
     ungroup()
   ids <- unique(df$ndowid)
-  pal <- pal <- rep_len(color_pal, length(ids))
+  pal <- rep_len(color_pal, length(ids))
   
   map <- leaflet() %>%
     addProviderTiles("Esri.WorldTopoMap", options = providerTileOptions(attribution = NA))
@@ -24,16 +24,52 @@ CollarMap_dplyr <- function(dataframe) {
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
                         weight = 2,
                         color = pal[i],
-                        opacity = .4) %>% 
-      addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
+                        opacity = .4)
+    map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
                        stroke = FALSE,
                        radius = 4,
                        color = pal[i],
-                       fillOpacity = 1)
+                       fillOpacity = 1,
+                       popup = paste("NDOW ID:", ids[i]))
   }
   return(map)
 }
 
+## map points and lines on leaflet map
+mapPoints <- function(map, df) {
+  ids <- unique(df$ndowid)
+  pal <- rep_len(color_pal, length(ids))
+  layers <- list()
+  
+  for(i in seq_along(ids)) {
+    dat <- df %>% filter(ndowid == ids[i])
+    map <- addPolylines(map, lng = dat$long_x, lat = dat$lat_y,
+                        group = as.character(ids[i]),
+                        color = pal[i], weight = 1) 
+    map <- addCircleMarkers(map, lng = dat$long_x, lat = dat$lat_y,
+                            group = as.character(ids[i]), color = pal[i],
+                            radius = 3, stroke = FALSE,fillOpacity = .3,
+                            popup = paste(sep = "<br>",
+                                          paste("<b>NDOW ID:</b> ", ids[i]),
+                                          paste("<b>timestamp:</b> ", dat$timestamp),
+                                          paste("<b>LocID</b>: ", dat$locid)))
+    layers <- c(layers, as.character(ids[i]))
+  }
+  map <- addLayersControl(map, overlayGroups = layers)
+  return(map)
+}
+
+## map polygons on leaflet map
+mapPolygons <- function(map, geojson) {
+  pal <- rep_len(color_pal, length(geojson))
+  for (i in seq_along(geojson)) {
+    map <- addGeoJSON(map, geojson[[i]], color = pal[i],
+                      weight = 1, group = names(geojson)[i])
+  }
+  return(map)
+}
+
+#####
 Calculate_NSD <- function(dat) {
   dat <- as.data.frame(dat)
   #dat$timestamp <- as.character(dat$timestamp)
@@ -176,7 +212,6 @@ get_mud <- function(ud, pct_contour) {
 }
 
 # MOVEMENT ANALYSIS FUNCTIONS
-## alternate coordinate conversion
 xyConv <- function(df, xy = c('long_x', 'lat_y'), CRSin = '+proj=longlat',
                    CRSout = '+proj=utm +zone=11') {
   df <- df[complete.cases(df[, xy]), ]
@@ -191,44 +226,30 @@ xyConv <- function(df, xy = c('long_x', 'lat_y'), CRSin = '+proj=longlat',
   return(df)
 }
 
-coord_conv <- function(df, conversion = 'utm') {
-  df <- df[complete.cases(df[, .(long_x, lat_y)])]
-  conv <- SpatialPoints(cbind(as.numeric(df$long_x), as.numeric(df$lat_y)),
-                        proj4string = CRS('+proj=longlat'))
-  conv <- as.data.frame(spTransform(conv, CRS('+proj=utm +zone=11')))
-  colnames(conv) <- c('x', 'y')
-  df <- cbind(df, conv)
-  return(df)
-}
-
-move.dist <- function(x, y) {
+moveDist <- function(x, y) {
   dist <- c(0, sqrt((x[-1] - x[-length(x)])**2 + 
                       (y[-1] - y[-length(y)])**2))
-  return(dist)
+  return(dist) # same unit as input (meters)
 }
-
-# move.r2n <- function(x, y) {
-#   r2n <- (x - x[1])**2 + (y - y[1])**2
-#   return(r2n)
-# }
-move.r2n <- function(x, y) {
+moveNSD <- function(x, y) {
   r2n <- (x - x[1])**2 + (y - y[1])**2
   r2n <- (r2n - min(r2n)) / (max(r2n) - min(r2n))
   return(r2n)
 }
-
-move.dt <- function(time) {
-  if (class(time[1]) != 'POSIXct') {
-    time <- fastPOSIXct(time)
-  }
+moveDt <- function(time) {
   dt <- c(0, unclass(time[-1]) - unclass(time[-length(time)]))
-  return(dt)
+  return(dt / 3600) # seconds
 }
-
-move.speed <- function(dist, time) {
-  speed <- (dist / 1000) / (time / 3600)
+moveSpeed <- function(dist, time) {
+  speed <- (dist / 1000) / (time)
+  speed[is.nan(speed)] <- 0
   return(speed)
 }
+
+
+
+#
+
 
 movement_eda <- function(dat, plot_var, type = 'line') {
   pal <- rep_len(color_pal, length(unique(dat$ndowid)))
@@ -259,41 +280,6 @@ movement_eda <- function(dat, plot_var, type = 'line') {
           strip.background = element_blank(),
           strip.text = element_text(color = 'grey50', size = 12))
   return(p)
-}
-
-# LEAFLET MAPPING FUNCTIONS 5/2016
-mapPoints <- function(map, df) {
-  df <- as.data.table(df)
-  df <- df[complete.cases(df[, .(long_x, lat_y)])]
-  unq_id <- unique(df$ndowid)
-  pal <- rep_len(color_pal, length(unq_id))
-  layers <- list()
-  
-  for(i in 1:length(unq_id)) {
-    dat <- df[ndowid == unq_id[i]]
-    map <- addPolylines(map, lng = dat$long_x, lat = dat$lat_y,
-                        group = as.character(unq_id[i]),
-                        color = pal[i], weight = 1) 
-    map <- addCircleMarkers(map, lng = dat$long_x, lat = dat$lat_y,
-                            group = as.character(unq_id[i]), color = pal[i],
-                            radius = 3, stroke = FALSE,fillOpacity = .3,
-                            popup = paste(sep = "<br>",
-                                          paste("<b>NDOW ID:</b> ", unq_id[i]),
-                                          paste("<b>timestamp:</b> ", dat$timestamp),
-                                          paste("<b>LocID</b>: ", dat$locid)))
-    layers <- c(layers, as.character(unq_id[i]))
-  }
-  map <- addLayersControl(map, overlayGroups = layers)
-  return(map)
-}
-
-mapPolygons <- function(map, geojson) {
-  pal <- rep_len(color_pal, length(geojson))
-  for (i in seq_along(geojson)) {
-    map <- addGeoJSON(map, geojson[[i]], color = pal[i],
-                      weight = 1, group = names(geojson)[i])
-  }
-  return(map)
 }
 
 ## function to get contours from kernel density estimates

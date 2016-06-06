@@ -16,14 +16,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-#dat <- fread("S:/MGritts/telemetR/Collars.csv")
-#dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- fread("Collars.csv")
-#dat_animal <- read.csv("Animals.csv")
-dat <- read_csv('Collars.csv')
-dat_animal <- read_csv('Animals.csv')
-
-#dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
+dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
+dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
+#dat <- read_csv('Collars.csv', n_max = 1000000)
+#dat_animal <- read_csv('Animals.csv')
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
@@ -47,10 +43,10 @@ shinyServer(function(input, output, session) {
   ndowList <- reactive({
     if (input$sl_species == 'MULD') {
       l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
-        select(ndowid) %>% extract2(1) %>% unique() %>% sort()
+        dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
     } else {
       l <- dat_animal %>% filter(spid == input$sl_species) %>% 
-        select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
+        dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
     }
     return(l)
   })
@@ -90,7 +86,7 @@ shinyServer(function(input, output, session) {
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal %>% 
       filter(spid == input$sl_species) %>% 
-      select(c(2, 1, 5, 4, 8, 9, 6))
+      dplyr::select(c(2, 1, 5, 4, 8, 9, 6))
     if (input$sl_species == "MULD") {
       df <- df %>% filter(mgmtarea ==  input$sl_mgmtarea)
     }
@@ -125,38 +121,38 @@ shinyServer(function(input, output, session) {
     shinyjs::reset("ck_date")
   })
 
-# PAGE 2 LOGIC, SPATIAL ANALYSIS
-  # CREATE DATAFRAME WITH MOVEMENT PARAMETERS
+##################################  
+# PAGE 2 LOGIC, SPATIAL ANALYSIS #
+##################################
+  ## create dataframe of movement parameters for analysis
   move_df <- eventReactive(input$ac_UpdateMap, {
-    df <- coord_conv(df_subset())
-    df[, ':=' (dist = move.dist(x, y),
-               R2n = move.r2n(x, y),
-               mth = month(timestamp),
-               hr = hour(timestamp),
-               dt = move.dt(timestamp)), by = ndowid]
-    df[, ':=' (sig.dist = cumsum(dist),
-               speed = move.speed(dist, dt)), by = ndowid]
-    #p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
-    #return(list(df, p))
-    return(df)
+    df <- xyConv(df_subset())
+    move <- df %>%
+      group_by(ndowid) %>%
+      mutate(Distance = moveDist(x, y),
+             sigDist = cumsum(Distance),
+             NSD = moveNSD(x, y),
+             dTime = moveDt(timestamp),
+             Speed = moveSpeed(Distance, dTime),
+             Year = year(timestamp),
+             Month = month(timestamp),
+             Day = day(timestamp),
+             Hour = hour(timestamp)) %>%
+      ungroup()
+    return(move)
   })
 
-# PAGE 2 MAP, EVERY POINT
-  ## CONTOUR LIST
+  ## countour list for home range contours
   pct_contour <- reactive({
     return(as.numeric(strsplit(input$tx_Contour, ', ')[[1]]))
   })
 
-  # TESTING TEXT OUTPUT
-  output$tx_Conts <- renderText({
-    dput(as.character(pct_contour()))
-  })
-
-  ## HOME RANGE ESTIMATION
+  ## home range estimation
   hr_ud <- eventReactive(input$ac_UpdateMap, {
+    df <- as.data.frame(move_df())
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
-      spdf <- SpatialPointsDataFrame(coordinates(cbind(move_df()$x, move_df()$y)),
-                                     data = move_df(), proj4string = CRS('+proj=utm +zone=11'))
+      spdf <- SpatialPointsDataFrame(coordinates(cbind(df$x, df$y)),
+                                     data = df, proj4string = CRS('+proj=utm +zone=11'))
       cp <- mcp(spdf[, 2], percent = 99)
       cp <- spTransform(cp, CRS('+proj=longlat'))
       ids <- cp$id
@@ -168,15 +164,15 @@ shinyServer(function(input, output, session) {
       }
       names(hr) <- ids
     } else if (input$sl_HomeRange == 'Kernel Density') {
-      kd <- SpatialPointsDataFrame(coordinates(cbind(move_df()$long_x, move_df()$lat_y)), data = move_df(),
+      kd <- SpatialPointsDataFrame(coordinates(cbind(df$long_x, df$lat_y)), data = df,
                                    proj4string = CRS('+proj=longlat'))
       kd <- kernelUD(kd[, 2])
       hr <- lapply(kd, function(x) getContours(x, pct_contour()))
-      
+
       ## spdf to geojson, wrapping this in an event reactive
       #hr <- lapply(hr, function(x) geojson_json(x))
     } else if (input$sl_HomeRange == 'Brownian Bridge') {
-      bb <- to_ltraj(move_df())
+      bb <- to_ltraj(df)
       bb <- estimate_bbmm(bb)
       bb <- bbBugFix(bb)
       hr <- lapply(bb, function(x) getContours(x, pct_contour()))
@@ -184,27 +180,27 @@ shinyServer(function(input, output, session) {
         hr[[i]]@proj4string <- CRS('+init=epsg:26911')
         hr[[i]] <- spTransform(hr[[i]], CRS('+init=epsg:4326'))
       }
-      
+
       ## spdf to geojson, wrapping this in an event reactive
       #hr <- lapply(hr, function(x) geojson_json(x))
     }
     return(hr)
   })
-  
+
   ## BASEMAP
   lfMap <- eventReactive(input$ac_UpdateMap, {
     hr <- hr_ud()
     if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
       hr <- lapply(hr, function(x) geojson_json(x))
     }
-    
+
     lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                            options = providerTileOptions(attribution = NA))
 
     if (input$sl_HomeRange == 'Select Method') {
-      lflt %>% mapPoints(move_df())
+      lflt <- lflt %>% mapPoints(move_df())
     } else {
-      lflt %>% mapPolygons(hr) %>% mapPoints(move_df())
+      lflt <- lflt %>% mapPolygons(hr) %>% mapPoints(move_df())
     }
   })
 
@@ -212,7 +208,7 @@ shinyServer(function(input, output, session) {
   output$map <- renderLeaflet({
     lfMap()
   })
-  
+
   # SHAPEFILE OUTPUT
   output$dl_Shape <- downloadHandler(
     filename = function() 'UtlzDist_Export.zip',
@@ -231,7 +227,7 @@ shinyServer(function(input, output, session) {
     },
     contentType = 'application/zip'
   )
-  
+
   # HIDE POLYGON OUTPUT IF MCP IS USED
   observeEvent(input$sl_HomeRange, {
     if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
@@ -240,7 +236,7 @@ shinyServer(function(input, output, session) {
       shinyjs::hide('dl_Shape')
     }
   })
-  
+
   # SPATIAL DATA OUTPUT
   output$downloadData <- downloadHandler(
     filename = function() {paste("CollarData", ".", sep = "")},
@@ -257,27 +253,25 @@ shinyServer(function(input, output, session) {
   output$move.plot <- renderPlot({
     move_plots()
   })
-  
+
   observeEvent(input$slz_ndowid, {
-    # if (is.null(input$slz_ndowid) | '' %in% input$slz_ndowid) {
-    ids <- input$slz_ndowid 
+    ids <- input$slz_ndowid
     updateSelectizeInput(session, 'slz_nsdID', choices = sort(ids), selected = ids[1])
   })
-  
+
   output$nsdTimeSeries <- highcharter::renderHighchart({
-    df <- move_df() %>% 
-      arrange(ndowid, timestamp) %>% 
-      group_by(ndowid) %>% 
-      mutate(nsd = move.r2n(x, y),
-             ts = date(timestamp)) %>% 
-      group_by(ndowid, ts) %>% 
-      slice(1)
-    
+    df <- move_df() %>%
+      mutate(ts = as_date(timestamp)) %>% 
+      arrange(ndowid, ts) %>%
+      group_by(ndowid, ts) %>%
+      slice(1) %>% 
+      ungroup()
+
     ids <- input$slz_nsdID
     hc <- highchart()
     for(i in seq_along(ids)) {
       d <- df %>% filter(ndowid == ids[i])
-      hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$nsd, 
+      hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$NSD,
                                        color = color_pal[i], name = ids[i])
     }
     hc
