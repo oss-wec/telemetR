@@ -35,13 +35,13 @@ shinyUI(tagList(
                     )
             )),
 
-# PAGE 2, SPATIAL ANALYSIS   
+# PAGE 2, SPATIAL ANALYSIS
    tabPanel("Spatial",
     div(class = "outer", tags$head(includeCSS("style.css")),
         tags$head(includeCSS("style.css")),
         leafletOutput("map", width = "100%", height = "100%"),
         absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                      width = 330, height = 600, top = "110", bottom = "auto", 
+                      width = 330, height = 600, top = "110", bottom = "auto",
                       left = 10, right = "auto",
                       h2("Spatial Analysis"),
                       p("Select inputs for spatial analysis."),
@@ -66,14 +66,15 @@ shinyUI(tagList(
     )
   ),
 
-# PAGE 3, MOVEMENT ANALYSIS  
+# PAGE 3, MOVEMENT ANALYSIS
   tabPanel("Movement",
            fluidRow(column(3,
                            selectInput('fig.type', 'Figure Type',
                                        choices = c('point', 'line', 'histogram'),
-                                       selected = 'point'),
-                           selectInput("y.input", "Y Axis", 
-                                       choices = c("dist", "R2n", "sig.dist", "speed", "dt"))
+                                       selected = 'line'),
+                           selectInput("y.input", "Y Axis",
+                                       choices = c("Distance", "NSD", "sigDist", "Speed", "dTime"),
+                                       selected = 'NSD')
                            ),
                     column(3, br(), br(), br(), br(), br(),
                            actionButton('ac_RunAnalysis', 'Create Graphs', color = 'blue'))
@@ -83,11 +84,11 @@ shinyUI(tagList(
            ),
            hr(),
            fluidRow(
-             column(3, 
+             column(3,
                     selectizeInput('slz_nsdID', 'Select ID', choices = NULL, multiple = TRUE)),
              column(4,
-                    p('Choose animals to display in the figure below. Multiple selections are supported. 
-                      Net Squared Displacement is a metric used to classify movement strategies. The 
+                    p('Choose animals to display in the figure below. Multiple selections are supported.
+                      Net Squared Displacement is a metric used to classify movement strategies. The
                       are transformed to be between 0 and 1.'))
            ),
            fluidRow(
@@ -95,7 +96,7 @@ shinyUI(tagList(
            )
           ),
 
-# PAGE 4, DATA EXPORT  
+# PAGE 4, DATA EXPORT
   tabPanel("Data",
            h2("All GPS Data"),
            p("All GPS collar data for seleceted animals. To download the data in the table below, click the download button."),

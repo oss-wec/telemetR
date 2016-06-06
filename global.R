@@ -6,7 +6,7 @@ color_pal <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6",
 
 # MAPPING FUNCTIONS
 ## map collar data on page one. One point per day for lines, First, and Last point
-CollarMap_dplyr <- function(dataframe) {
+CollarMap <- function(dataframe) {
   df <- dataframe %>% 
     filter(!(is.na(long_x) | is.na(lat_y))) %>% 
     arrange(ndowid, timestamp) %>% 
@@ -14,7 +14,7 @@ CollarMap_dplyr <- function(dataframe) {
     slice(1) %>% 
     ungroup()
   ids <- unique(df$ndowid)
-  pal <- pal <- rep_len(color_pal, length(ids))
+  pal <- rep_len(color_pal, length(ids))
   
   map <- leaflet() %>%
     addProviderTiles("Esri.WorldTopoMap", options = providerTileOptions(attribution = NA))
@@ -24,12 +24,13 @@ CollarMap_dplyr <- function(dataframe) {
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
                         weight = 2,
                         color = pal[i],
-                        opacity = .4) %>% 
-      addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
+                        opacity = .4)
+    map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
                        stroke = FALSE,
                        radius = 4,
                        color = pal[i],
-                       fillOpacity = 1)
+                       fillOpacity = 1,
+                       popup = paste("NDOW ID:", ids[i]))
   }
   return(map)
 }
