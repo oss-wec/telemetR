@@ -125,35 +125,36 @@ shinyServer(function(input, output, session) {
     shinyjs::reset("ck_date")
   })
 
-# PAGE 2 LOGIC, SPATIAL ANALYSIS
-  # CREATE DATAFRAME WITH MOVEMENT PARAMETERS
+##################################  
+# PAGE 2 LOGIC, SPATIAL ANALYSIS #
+##################################
+  ## create dataframe of movement parameters for analysis
   move_df <- eventReactive(input$ac_UpdateMap, {
-    df <- coord_conv(df_subset())
-    df[, ':=' (dist = move.dist(x, y),
-               R2n = move.r2n(x, y),
-               mth = month(timestamp),
-               hr = hour(timestamp),
-               dt = move.dt(timestamp)), by = ndowid]
-    df[, ':=' (sig.dist = cumsum(dist),
-               speed = move.speed(dist, dt)), by = ndowid]
-    #p <- movement_eda(df, plot_var = input$y.input, type = input$fig.type)
-    #return(list(df, p))
+    df <- xyConv(df_subset())
+    move <- df %>% 
+      group_by(ndowid) %>% 
+      mutate(Distance = moveDist(x, y),
+             sigDist = cumsum(distance),
+             NSD = moveNSD(x, y),
+             dTime = moveDt(timestamp),
+             Speed = moveSpeed(distance, dtime),
+             Year = year(timestamp),
+             Month = month(timestamp),
+             Day = day(timestamp),
+             Hour = hour(timestamp)) %>% 
+      ungroup()
     return(df)
   })
 
 # PAGE 2 MAP, EVERY POINT
-  ## CONTOUR LIST
+  ## countour list for home range contours
   pct_contour <- reactive({
     return(as.numeric(strsplit(input$tx_Contour, ', ')[[1]]))
   })
 
-  # TESTING TEXT OUTPUT
-  output$tx_Conts <- renderText({
-    dput(as.character(pct_contour()))
-  })
-
-  ## HOME RANGE ESTIMATION
+  ## home range estimation
   hr_ud <- eventReactive(input$ac_UpdateMap, {
+    
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       spdf <- SpatialPointsDataFrame(coordinates(cbind(move_df()$x, move_df()$y)),
                                      data = move_df(), proj4string = CRS('+proj=utm +zone=11'))
