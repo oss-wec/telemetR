@@ -1,4 +1,6 @@
 library(shiny)
+library(dplyr)
+library(readr)
 library(leaflet)
 library(data.table)
 library(gridExtra)
@@ -10,23 +12,25 @@ library(adehabitatHR)
 library(fasttime)
 library(maptools)
 library(shinyjs)
-library(dplyr)
 library(magrittr)
 library(highcharter)
 source("global.R")
 
 #dat <- fread("S:/MGritts/telemetR/Collars.csv")
 #dat_animal <- read.csv("S:/MGritts/telemetR/Animals.csv")
-dat <- fread("Collars.csv")
-dat_animal <- read.csv("Animals.csv")
-dat$timestamp <- dat[, fastPOSIXct(timestamp)]
+#dat <- fread("Collars.csv")
+#dat_animal <- read.csv("Animals.csv")
+dat <- read_csv('Collars.csv')
+dat_animal <- read_csv('Animals.csv')
 
-dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
+#dat_animal <- dat_animal[dat_animal$deviceid < 1000000, ] # THIS REMOVES ALL VHF COLLARS, WORK AROUND
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
-  
-# PAGE 1 LOGIC
+
+################  
+# PAGE 1 LOGIC #
+################    
   ## enable/disable mgmt area based on species input
   observeEvent(input$sl_species, {
     if (input$sl_species == 'MULD') {
@@ -57,12 +61,38 @@ shinyServer(function(input, output, session) {
     updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
   })
   
+  ## subset dat by input: species, mgmt area, id, date
+  df_subset <- reactive({
+    # filter by species, always
+    df <- dat %>% filter(species == input$sl_species)
+    # filter by management area, only muld
+    if (input$sl_species ==  'MULD') {
+      df <- df %>% filter(mgmtarea == input$sl_mgmtarea)
+    } 
+    # filter by ndow id, only if not null
+    if (!(is.null(input$slz_ndowid) | '' %in% input$slz_ndowid)) {
+      df <- df %>% filter(ndowid %in% as.numeric(input$slz_ndowid))
+    }
+    # filter by date, only if checked
+    if (input$ck_date == TRUE) {
+      df <- df %>% filter(date(timestamp) >= input$sl_dates[1] &
+                   date(timestamp) <= input$sl_dates[2])
+    }
+    return(df)
+  })
+  
+  ## preview map, shows every 20 locations for selected input
+  output$preview <- renderLeaflet({
+    CollarMap(df_subset())
+  })
+  
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
-    df <- dat_animal[dat_animal$spid == input$sl_species,
-                     c(2, 1, 5, 4, 8, 9, 6)]
+    df <- dat_animal %>% 
+      filter(spid == input$sl_species) %>% 
+      select(c(2, 1, 5, 4, 8, 9, 6))
     if (input$sl_species == "MULD") {
-      df <- df[df$mgmtarea == input$sl_mgmtarea, ]
+      df <- df %>% filter(mgmtarea ==  input$sl_mgmtarea)
     }
     DT::datatable(df, rownames = FALSE,
                   colnames = c("Species", "NDOW ID", "Device ID", "Area",
@@ -70,39 +100,9 @@ shinyServer(function(input, output, session) {
               class = "cell-border stripe")
   })
 
-  ## preview map, shows every 20 locations for selected input
-  output$preview <- renderLeaflet({
-      CollarMap(df_subset())
-    })
-
-  ## list of NDOW IDs to subset dataframe
-  # id_list <- reactive({
-  #   return(as.numeric(strsplit(input$tx_ndowid, ', ')[[1]]))
-  # })
-
-  # DATAFRAME SUBSET BY SELECTED SPECIES, MGMT AREA, ID, DATE
-  df_subset <- reactive({
-    if (is.null(input$slz_ndowid) | '' %in% input$slz_ndowid) {
-      df <- dat[species == input$sl_species, ]
-      if (input$sl_species == "MULD") {
-        df <- df[mgmtarea == input$sl_mgmtarea, ]
-      }
-    } else {
-      df <- dat[species == input$sl_species &
-                ndowid %in% as.numeric(input$slz_ndowid), ]
-      if (input$ck_date == TRUE) {
-        df <- df[timestamp >= as.POSIXct(input$sl_dates[1]) &
-                 timestamp <= as.POSIXct(input$sl_dates[2]), ]
-      }
-    }
-    # err_pts <- as.numeric(strsplit(input$tx_ErrPoints, ', ')[[1]])
-    # df <- df[!(locid %in% err_pts), ]
-    return(df)
-  })
-
   # DATAFRAME OF ROWS WITH NA VALUES FOR LAT OR LONG
   df_na <- reactive({
-    return(df_subset()[is.na(df_subset()$long_x | df_subset()$lat_y), ])
+    return(dat %>% filter(is.na(long_x) | is.na(lat_y)) %>% nrow() %>% as.numeric())
   })
 
   # OUTPUT INFO FOR ANIMALS SELECTED IN MAP
@@ -112,7 +112,7 @@ shinyServer(function(input, output, session) {
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
             paste("<b>Error Rate:</b> ",
-                  round(nrow(df_na()) / nrow(df_subset()), 4)),
+                  round(df_na() / nrow(df_subset()), 2), 4),
             paste("<b>Min. Date:</b> ", min(df_subset()$timestamp)),
             paste("<b>Max. Date:</b> ", max(df_subset()$timestamp))
             ))

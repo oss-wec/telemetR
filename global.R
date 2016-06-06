@@ -4,25 +4,32 @@ color_pal <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6",
          "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", 
          "#5574A6", "#3B3EAC")
 
-CollarMap <- function(dataframe) {
-  df <- as.data.table(dataframe)
-  df <- df[complete.cases(df[, .(long_x, lat_y)])]
-  df_lines <- df[, .SD[c(seq(1, .N, 20), .N)], by = ndowid]
-  unq_id <- unique(df[, ndowid])
-  pal <- rep_len(color_pal, length(unq_id))
-  map <- leaflet() %>% addProviderTiles("Esri.WorldTopoMap",
-                                        options = providerTileOptions(attribution = NA))
+# MAPPING FUNCTIONS
+## map collar data on page one. One point per day for lines, First, and Last point
+CollarMap_dplyr <- function(dataframe) {
+  df <- dataframe %>% 
+    filter(!(is.na(long_x) | is.na(lat_y))) %>% 
+    arrange(ndowid, timestamp) %>% 
+    group_by(ndowid, as_date(timestamp)) %>% 
+    slice(1) %>% 
+    ungroup()
+  ids <- unique(df$ndowid)
+  pal <- pal <- rep_len(color_pal, length(ids))
   
-  for (i in 1:length(unq_id)) {
-    d <- df_lines[ndowid == unq_id[i]]
-    dp <- d[, .SD[c(1, .N)]]
-    
+  map <- leaflet() %>%
+    addProviderTiles("Esri.WorldTopoMap", options = providerTileOptions(attribution = NA))
+  for (i in seq_along(ids)) {
+    d <- df %>% filter(ndowid == ids[i])
+    dp <- d[c(1, nrow(d)), ]
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
-                        weight = 2, color = pal[i], opacity = .4)
-    map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
-                            stroke = FALSE, radius = 4, color = pal[i],
-                            fillOpacity = 1,
-                            popup = paste("NDOW ID:", unq_id[i]))
+                        weight = 2,
+                        color = pal[i],
+                        opacity = .4) %>% 
+      addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,
+                       stroke = FALSE,
+                       radius = 4,
+                       color = pal[i],
+                       fillOpacity = 1)
   }
   return(map)
 }
