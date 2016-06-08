@@ -4,7 +4,7 @@ library(leaflet)
 
 shinyUI(tagList(
   useShinyjs(),
-  navbarPage("NDOW GPS Collar", id = "nav",
+  navbarPage("telemetR", id = "nav",
 # PAGE 1, SUBSET DATA   
     tabPanel('Preview', div(class = "pg1",
             fluidRow(column(3, h2('Filter Data'),
@@ -48,17 +48,9 @@ shinyUI(tagList(
                       radioButtons('rd_nPoints', 'Path Smoothing', choices = c('Smooth', 'All Points'),
                                    selected = 'All Points', inline = TRUE),
                       selectizeInput("sl_HomeRange", "Homerange Estimation Method",
-                                     choices = c('Select Method', "Minimum Convex Polygon", "Kernel Density", "Brownian Bridge"),
-                                     selected = 'Select Method'),
-                      # selectInput('sl_Params', 'Homerange Parameter Methods',
-                      #             choices = c('h = href', 'h = LSCV' ,'h = Adaptive'),
-                      #             selected = 'h = href'),
-                      textInput('tx_Contour', 'Contour Percentages', placeholder = '95', value = '95'),
+                                     choices = c('Display Points', "Minimum Convex Polygon", "Kernel Density", "Brownian Bridge"),
+                                     selected = 'Display Points'),
                       actionButton("ac_UpdateMap", "Update Map"),
-                      # hr(),
-                      # selectInput('sl_Output', 'Output File Format',
-                      #             choices = c('Google - KML', 'ESRI - Shapefile'),
-                      #             selected = 'Google - KML'),
                       downloadButton('dl_Shape', 'Download Polygon'),
                       hr(),
                       textOutput('tx_Conts')

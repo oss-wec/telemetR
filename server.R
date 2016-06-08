@@ -16,10 +16,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- read_csv('Collars.csv', n_max = 1000000)
-#dat_animal <- read_csv('Animals.csv')
+#dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
+dat <- read_csv('Collars.csv', n_max = 1000000)
+dat_animal <- read_csv('Animals.csv')
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
@@ -77,7 +77,7 @@ shinyServer(function(input, output, session) {
     return(df)
   })
   
-  ## preview map, shows every 20 locations for selected input
+  ## preview map, shows 1 locations per day for selected input
   output$preview <- renderLeaflet({
     CollarMap(df_subset())
   })
@@ -96,19 +96,20 @@ shinyServer(function(input, output, session) {
               class = "cell-border stripe")
   })
 
-  # DATAFRAME OF ROWS WITH NA VALUES FOR LAT OR LONG
+
+  # n NAs (lat, long) for error rate
   df_na <- reactive({
-    return(dat %>% filter(is.na(long_x) | is.na(lat_y)) %>% nrow() %>% as.numeric())
+    return(df_subset() %>% filter(is.na(long_x) | is.na(lat_y)) %>% nrow() %>% as.numeric())
   })
 
-  # OUTPUT INFO FOR ANIMALS SELECTED IN MAP
+  # output info for animals selected in map
   output$dataInfo <- renderUI({
     HTML(
       paste(sep = "<br/>",
             paste("<b>Total Animals:</b> ", length(unique(df_subset()$ndowid))),
             paste("<b>Total Points:</b> ", nrow(df_subset())),
             paste("<b>Error Rate:</b> ",
-                  round(df_na() / nrow(df_subset()), 2), 4),
+                  round(100 * (df_na() / nrow(df_subset())), 4), '%'),
             paste("<b>Min. Date:</b> ", min(df_subset()$timestamp)),
             paste("<b>Max. Date:</b> ", max(df_subset()$timestamp))
             ))
@@ -121,9 +122,9 @@ shinyServer(function(input, output, session) {
     shinyjs::reset("ck_date")
   })
 
-##################################  
-# PAGE 2 LOGIC, SPATIAL ANALYSIS #
-##################################
+###########################  
+# PAGE 2 SPATIAL ANALYSIS #
+###########################
   ## create dataframe of movement parameters for analysis
   move_df <- eventReactive(input$ac_UpdateMap, {
     df <- xyConv(df_subset())
@@ -197,7 +198,7 @@ shinyServer(function(input, output, session) {
     lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                            options = providerTileOptions(attribution = NA))
 
-    if (input$sl_HomeRange == 'Select Method') {
+    if (input$sl_HomeRange == 'Display Points') {
       lflt <- lflt %>% mapPoints(move_df())
     } else {
       lflt <- lflt %>% mapPolygons(hr) %>% mapPoints(move_df())
@@ -245,7 +246,9 @@ shinyServer(function(input, output, session) {
     }
   )
 
-# PAGE 3, MOVEMENT ANALYSIS
+#############################
+# PAGE 3, MOVEMENT ANALYSIS #
+#############################
   move_plots <- eventReactive(input$ac_RunAnalysis, {
     p <- movement_eda(move_df(), plot_var = input$y.input, type = input$fig.type)
     return(p)
@@ -277,8 +280,10 @@ shinyServer(function(input, output, session) {
     hc
   })
 
-  # PAGE 4
-  # ALL DATA OUTPUT BUTTON
+################
+# PAGE 4, DATA #
+################  
+  # DT display
   output$collar.table <- DT::renderDataTable({
     DT::datatable(move_df(), rownames = FALSE,
                   class = "cell-border stripe")
