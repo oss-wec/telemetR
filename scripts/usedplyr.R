@@ -39,7 +39,8 @@ estHomeRange <- function(df, xy, id, method, CRSin = '+init=epsg:26911') {
   } else if (method == 'bb') {
     hr <- as.ltraj(coords, date = df$timestamp, id = df[, id])
     sig1 <- liker(hr, sig2 = 40, rangesig1 = c(0, 10), plotit = FALSE)
-    hr <- kernelbb(hr, sig1[[1]]$sig1, 40, grid = 100, byburst = TRUE)
+    sig1 <- unlist(lapply(1:length(sig1), function(i) sig1[[i]]$sig1))
+    hr <- kernelbb(hr, sig1, 40, grid = 100, byburst = TRUE)
   }
   return(hr)
 }
@@ -48,20 +49,46 @@ hr <- estHomeRange(df, xy = c('x', 'y'), id = 'ndowid', 'mcp')
 plot(hr)
 hr <- estHomeRange(df, xy = c('x', 'y'), id = 'ndowid', 'kd')
 image(hr)
-x <- lapply(hr, function(x) getContours(x, c(50, 90)))
-plot(x[[1]])
+hr <- estHomeRange(df, xy = c('x', 'y'), id = 'ndowid', 'bb')
+image(hr[[1]])
 
+getContours <- function(ud, pct) {
+  ids <- as.character(pct)
+  x <- getvolumeUD(ud)
+  xyma <- coordinates(x)
+  xyl <- list(x = unique(xyma[, 1]), y = unique(xyma[, 2]))
+  z <- as.image.SpatialGridDataFrame(x[, 1])$z
+  
+  cl <- lapply(pct, function(x) { 
+    contourLines(x = xyl$x, y = xyl$y, z, nlevels = 1, levels = x)
+  })
+  
+  plys <- lapply(seq_along(cl), function(i) {
+    Polygons(lapply(seq_along(cl[[i]]), function(j) {
+      m <- cl[[i]][[j]]
+      ply <- cbind(m$x, m$y)
+      ply <- rbind(ply, ply[1, ])
+      Polygon(ply)
+    }), ID = ids[i])
+  })
+  
+  plys <- lapply(plys, function(x) checkPolygonsHoles(x))
+  splys <- SpatialPolygons(plys)
+  dff <- data.frame(id = ids)
+  row.names(dff) <- ids
+  spdf <- SpatialPolygonsDataFrame(splys, dff)
+  return(spdf)
+}
 
+factor(df$ndowid)
 df <- xyConv(dat)
-move <- df %>%
-  group_by(ndowid) %>%
-  mutate(Distance = moveDist(x, y),
-         sigDist = cumsum(Distance),
-         NSD = moveNSD(x, y),
-         dTime = moveDt(timestamp),
-         Speed = moveSpeed(Distance, dTime),
-         Year = year(timestamp),
-         Month = month(timestamp),
-         Day = day(timestamp),
-         Hour = hour(timestamp)) %>%
-  ungroup()
+df <- filter(df, ndowid == 896)
+coords <- data.frame(df[, c('x', 'y')])
+hr <- as.ltraj(coords, date = df$timestamp, id = df$ndowid)
+hr
+plot(hr)
+sig <- liker(hr, sig2 = 40, rangesig1 = c(1, 10))
+bb <- kernelbb(hr, sig1 = 3.28, sig2 = 40, same4all = FALSE, grid = 100)
+image(bb)
+plot(getverticeshr(bb, 95), add = T)
+plot(hr)
