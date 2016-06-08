@@ -50,6 +50,7 @@ shinyUI(tagList(
                       selectizeInput("sl_HomeRange", "Homerange Estimation Method",
                                      choices = c('Display Points', "Minimum Convex Polygon", "Kernel Density", "Brownian Bridge"),
                                      selected = 'Display Points'),
+                      textInput('tx_Contour', 'Contour Percentages', placeholder = '95', value = '95'),
                       actionButton("ac_UpdateMap", "Update Map"),
                       downloadButton('dl_Shape', 'Download Polygon'),
                       hr(),
