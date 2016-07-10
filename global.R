@@ -22,7 +22,7 @@ CollarMap <- function(dataframe) {
     d <- df %>% filter(ndowid == ids[i])
     dp <- d[c(1, nrow(d)), ]
     map <- addPolylines(map, lng = d$long_x, lat = d$lat_y,
-                        weight = 2,
+                        weight = 1,
                         color = pal[i],
                         opacity = .4)
     map <- addCircleMarkers(map, lng = dp$long_x, lat = dp$lat_y,

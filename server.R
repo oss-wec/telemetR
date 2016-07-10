@@ -9,17 +9,16 @@ library(lubridate)
 library(ggplot2)
 library(sp)
 library(adehabitatHR)
-library(fasttime)
 library(maptools)
 library(shinyjs)
 library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
-dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
-#dat <- read_csv('Collars.csv', n_max = 1000000)
-#dat_animal <- read_csv('Animals.csv')
+#dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
+#dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
+dat <- read_csv('/home/ubuntu/data/Collars.csv')
+dat_animal <- read_csv('/home/ubuntu/data/Animals.csv')
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
