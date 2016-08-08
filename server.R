@@ -15,10 +15,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-#dat <- read_csv("S:/MGritts/telemetR/Collars.csv")
-#dat_animal <- read_csv("S:/MGritts/telemetR/Animals.csv")
-dat <- read_csv('/home/ubuntu/data/collars.csv')
-dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
+dat <- read_csv("Collars.csv")
+dat_animal <- read_csv("Animals.csv")
+#dat <- read_csv('/home/ubuntu/data/collars.csv')
+#dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
 mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
@@ -120,12 +120,17 @@ shinyServer(function(input, output, session) {
     shinyjs::reset("sl_dates")
     shinyjs::reset("ck_date")
   })
+  
+  # CHANGE TAB TO SPATIAL AFTER CLICKING 'USE DATA'
+  observeEvent(input$ac_UseData, {
+    updateNavbarPage(session, "nav", "Spatial")
+  })
 
 ###########################  
 # PAGE 2 SPATIAL ANALYSIS #
 ###########################
   ## create dataframe of movement parameters for analysis
-  move_df <- eventReactive(input$ac_UpdateMap, {
+  move_df <- eventReactive(input$ac_UseData, {
     df <- xyConv(df_subset())
     move <- df %>%
       group_by(ndowid) %>%
@@ -148,7 +153,7 @@ shinyServer(function(input, output, session) {
   })
 
   ## home range estimation
-  hr_ud <- eventReactive(input$ac_UpdateMap, {
+  hr_ud <- eventReactive(input$ac_UseData, {
     df <- as.data.frame(move_df())
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       spdf <- SpatialPointsDataFrame(coordinates(cbind(df$x, df$y)),
@@ -188,7 +193,7 @@ shinyServer(function(input, output, session) {
   })
 
   ## BASEMAP
-  lfMap <- eventReactive(input$ac_UpdateMap, {
+  lfMap <- eventReactive(input$ac_UseData, {
     hr <- hr_ud()
     if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
       hr <- lapply(hr, function(x) geojson_json(x))

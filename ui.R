@@ -9,7 +9,7 @@ shinyUI(tagList(
     tabPanel('Preview', div(class = "pg1",
             fluidRow(column(3, h2('Filter Data'),
                             selectInput("sl_species", "Species",
-                                        unique(c("CBHS", "DBHS", "MTGT", "MULD", "RBHS", "RMEL"))
+                                        unique(c("CBHS", "DBHS", "MTGT", "MULD", "PRGN", "RBHS", "RMEL"))
                                         ),
                             selectInput("sl_mgmtarea", "Management Area",
                                         choices = 1:29, selected = 19),
@@ -21,7 +21,8 @@ shinyUI(tagList(
                             dateRangeInput("sl_dates", "Date Range:",
                                            start = "2010-01-01", min = "2010-01-01", 
                                            startview = "year"),
-                            actionButton("ac_reset", "Reset Input"),
+                            actionButton("ac_UseData", "Use Data", class = "btn-success fltr-btn"),
+                            actionButton("ac_reset", "Reset Input", class = "btn-warning fltr-btn"),
                             hr(),
                             htmlOutput("dataInfo")
                             ),
@@ -36,7 +37,7 @@ shinyUI(tagList(
             )),
 
 # PAGE 2, SPATIAL ANALYSIS
-   tabPanel("Spatial",
+   tabPanel("Spatial", id = "spatial",
     div(class = "outer", tags$head(includeCSS("style.css")),
         tags$head(includeCSS("style.css")),
         leafletOutput("map", width = "100%", height = "100%"),
@@ -70,7 +71,7 @@ shinyUI(tagList(
                                        selected = 'NSD')
                            ),
                     column(3, br(), br(), br(), br(), br(),
-                           actionButton('ac_RunAnalysis', 'Create Graphs', color = 'blue'))
+                           actionButton('ac_RunAnalysis', 'Create Graphs', class = 'btn-primary'))
                     ),
            fluidRow(
              plotOutput('move.plot', width = '100%', height = 600)
