@@ -19,36 +19,16 @@ dat <- read_csv("Collars.csv")
 dat_animal <- read_csv("Animals.csv")
 #dat <- read_csv('/home/ubuntu/data/collars.csv')
 #dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
-#mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
 
 ################  
 # PAGE 1 LOGIC #
 ################    
-  ## enable/disable mgmt area based on species input
-  # observeEvent(input$sl_species, {
-  #   if (input$sl_species == 'MULD') {
-  #     shinyjs::enable('sl_mgmtarea')
-  #   } else {
-  #     shinyjs::disable('sl_mgmtarea')
-  #   }
-  # })
-  
-  ## update select input for mgmt area
- # updateSelectInput(session, 'sl_mgmtarea', choices = mgmtList, selected = '19')
-  
   ## update selectize input for slz_ndowid
   ndowList <- reactive({
     l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
       dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
-    # if (input$sl_species == 'MULD') {
-    #   l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
-    #     dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
-    # } else {
-    #   l <- dat_animal %>% filter(spid == input$sl_species) %>% 
-    #     dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
-    # }
     return(l)
   })
   observeEvent(input$sl_species, {
@@ -63,13 +43,7 @@ shinyServer(function(input, output, session) {
   ## subset dat by input: species, mgmt area, id, date
   df_subset <- reactive({
     df <- dat %>% filter(species == input$sl_species & mgmtarea == input$sl_mgmtarea)
-    
-    # # filter by species, always
-    # df <- dat %>% filter(species == input$sl_species)
-    # # filter by management area, only muld
-    # if (input$sl_species ==  'MULD') {
-    #   df <- df %>% filter(mgmtarea == input$sl_mgmtarea)
-    # } 
+
     # filter by ndow id, only if not null
     if (!(is.null(input$slz_ndowid) | '' %in% input$slz_ndowid)) {
       df <- df %>% filter(ndowid %in% as.numeric(input$slz_ndowid))
@@ -90,13 +64,10 @@ shinyServer(function(input, output, session) {
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
     df <- dat_animal %>% 
-      filter(spid == input$sl_species) %>% 
-      dplyr::select(c(2, 1, 5, 4, 8, 9, 6))
-    if (input$sl_species == "MULD") {
-      df <- df %>% filter(mgmtarea ==  input$sl_mgmtarea)
-    }
+      filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+      dplyr::select(c(2, 1, 3, 5, 4, 8, 9, 6))
     DT::datatable(df, rownames = FALSE,
-                  colnames = c("Species", "NDOW ID", "Device ID", "Area",
+                  colnames = c("Species", "NDOW ID", "Sex", "Device ID", "Area",
                                "Inservice Date", "Outservice Date", "Fate"),
               class = "cell-border stripe")
   })
@@ -285,7 +256,8 @@ shinyServer(function(input, output, session) {
     for(i in seq_along(ids)) {
       d <- df %>% filter(ndowid == ids[i])
       hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$NSD,
-                                       color = color_pal[i], name = ids[i])
+                                       color = color_pal[i], name = ids[i]) %>% 
+            hc_yAxis(max = 1)
     }
     hc
   })
