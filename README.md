@@ -1,47 +1,11 @@
 # telemetR
-*0.90.0*
+*1.0.0*
 
 A Shiny application for the exploratory analysis and visualization of animal movement.
 
 ## Justification
 
-We have organized all GPS collar location data ( ~2 million records) into a single database yet all data output is limited to SQL statements and Microsoft Excel line limit (65,000 rows). The application also provides an GUI for exploratory data analysis and visualization of animal movement. Users can estimate basic home range and utilization distributions, and plots of standard movement parameters. After exploratory analysis is complete, data can be downloaded for further analysis.
-
-## Requirements
-
-Download and install the latest versions of R [(R version 3.3.x)](https://cran.r-project.org/bin/windows/base/) and RStudio [(RStudio Desktop 0.99.x)](https://www.rstudio.com/products/rstudio/download/).
-
-Copy and paste these commands into the RStudio console. If this is the first time you've used R you'll be asked to choose a CRAN mirror. Use the *US (CA-1) https mirror.* This will install the required packages for the app.
-
-```r
-install.packages("leaflet")
-install.packages("DT")
-install.packages("data.table")
-install.packages("shiny")
-install.packages("shinyjs")
-install.packages("ggplot2")
-install.packages("lubridate")
-install.packages("dplyr")
-install.packages("sp")
-install.packages("geojsonio")
-install.packages("adehabitatHR")
-install.packages("gridExtra")
-install.packages("fasttime")
-install.packages("ggthemes")
-install.packages("maptools")
-install.packages("magrittr")
-install.packages("highcharter")
-install.packages("readr")
-```
-
-I tried, for a long time to limit the number of packages required for the application. However, as more functionality is included in the application, more packages are required to do all the analyses. If the application errors on startup due to an uninstalled package, the R console will inform which packages needs to be installed. Install the package with the `install.packages('package name')` function call.
-
-To run the app use the command below. For all future uses this is the only line you will need to run.
-```r
-shiny::runGitHub("telemetR", "ndow-wisr", launch.browser = TRUE)
-# or
-shiny::runGitHub("ndow-wisr/telemetR", launch.browser = TRUE)
-```
+We have organized all GPS collar location data (~2 million records) into a single database yet all data output is limited to SQL statements and Microsoft Excel line limit (65,000 rows). The application also provides an GUI for exploratory data analysis and visualization of animal movement. Users can estimate basic home range and utilization distributions, and plots of standard movement parameters. After exploratory analysis is complete, data can be downloaded for further analysis.
 
 ## Demo & Instructions
 
