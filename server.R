@@ -19,7 +19,7 @@ dat <- read_csv("Collars.csv")
 dat_animal <- read_csv("Animals.csv")
 #dat <- read_csv('/home/ubuntu/data/collars.csv')
 #dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
-mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
+#mgmtList <- dat_animal %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()  # vector of mgmtlist for sl_mgmtarea
 
 shinyServer(function(input, output, session) {
 
@@ -27,29 +27,33 @@ shinyServer(function(input, output, session) {
 # PAGE 1 LOGIC #
 ################    
   ## enable/disable mgmt area based on species input
-  observeEvent(input$sl_species, {
-    if (input$sl_species == 'MULD') {
-      shinyjs::enable('sl_mgmtarea')
-    } else {
-      shinyjs::disable('sl_mgmtarea')
-    }
-  })
+  # observeEvent(input$sl_species, {
+  #   if (input$sl_species == 'MULD') {
+  #     shinyjs::enable('sl_mgmtarea')
+  #   } else {
+  #     shinyjs::disable('sl_mgmtarea')
+  #   }
+  # })
   
   ## update select input for mgmt area
-  updateSelectInput(session, 'sl_mgmtarea', choices = mgmtList, selected = '19')
+ # updateSelectInput(session, 'sl_mgmtarea', choices = mgmtList, selected = '19')
   
   ## update selectize input for slz_ndowid
   ndowList <- reactive({
-    if (input$sl_species == 'MULD') {
-      l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
-        dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
-    } else {
-      l <- dat_animal %>% filter(spid == input$sl_species) %>% 
-        dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
-    }
+    l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+      dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
+    # if (input$sl_species == 'MULD') {
+    #   l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+    #     dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
+    # } else {
+    #   l <- dat_animal %>% filter(spid == input$sl_species) %>% 
+    #     dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort() 
+    # }
     return(l)
   })
   observeEvent(input$sl_species, {
+    mgmtList <- dat_animal %>% filter(spid == input$sl_species) %>% dplyr::select(mgmtarea) %>% extract2(1) %>% unique() %>% sort()
+    updateSelectizeInput(session, 'sl_mgmtarea', choices = mgmtList)
     updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
   })
   observeEvent(input$sl_mgmtarea, {
@@ -58,12 +62,14 @@ shinyServer(function(input, output, session) {
   
   ## subset dat by input: species, mgmt area, id, date
   df_subset <- reactive({
-    # filter by species, always
-    df <- dat %>% filter(species == input$sl_species)
-    # filter by management area, only muld
-    if (input$sl_species ==  'MULD') {
-      df <- df %>% filter(mgmtarea == input$sl_mgmtarea)
-    } 
+    df <- dat %>% filter(species == input$sl_species & mgmtarea == input$sl_mgmtarea)
+    
+    # # filter by species, always
+    # df <- dat %>% filter(species == input$sl_species)
+    # # filter by management area, only muld
+    # if (input$sl_species ==  'MULD') {
+    #   df <- df %>% filter(mgmtarea == input$sl_mgmtarea)
+    # } 
     # filter by ndow id, only if not null
     if (!(is.null(input$slz_ndowid) | '' %in% input$slz_ndowid)) {
       df <- df %>% filter(ndowid %in% as.numeric(input$slz_ndowid))

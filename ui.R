@@ -42,7 +42,7 @@ shinyUI(tagList(
         tags$head(includeCSS("style.css")),
         leafletOutput("map", width = "100%", height = "100%"),
         absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                      width = 330, height = 600, top = "110", bottom = "auto",
+                      width = 330, top = "110", bottom = "auto",
                       left = 10, right = "auto",
                       h2("Spatial Analysis"),
                       p("Select inputs for spatial analysis."),
@@ -53,9 +53,7 @@ shinyUI(tagList(
                                      selected = 'Display Points'),
                       textInput('tx_Contour', 'Contour Percentages', placeholder = '95', value = '95'),
                       actionButton("ac_UpdateMap", "Update Map"),
-                      downloadButton('dl_Shape', 'Download Polygon'),
-                      hr(),
-                      textOutput('tx_Conts')
+                      downloadButton('dl_Shape', 'Download Polygon')
                       )
     )
   ),
