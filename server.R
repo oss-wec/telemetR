@@ -130,7 +130,7 @@ shinyServer(function(input, output, session) {
   })
 
   ## home range estimation
-  hr_ud <- eventReactive(input$ac_UseData, {
+  hr_ud <- eventReactive(input$ac_UpdateMap, {
     df <- as.data.frame(move_df())
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       spdf <- SpatialPointsDataFrame(coordinates(cbind(df$x, df$y)),
@@ -170,7 +170,7 @@ shinyServer(function(input, output, session) {
   })
 
   ## BASEMAP
-  lfMap <- eventReactive(input$ac_UseData, {
+  lfMap <- eventReactive(input$ac_UpdateMap, {
     hr <- hr_ud()
     if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
       hr <- lapply(hr, function(x) geojson_json(x))

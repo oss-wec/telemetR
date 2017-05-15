@@ -9,10 +9,10 @@ shinyUI(tagList(
     tabPanel('Preview', div(class = "pg1",
             fluidRow(column(3, h2('Filter Data'),
                             selectInput("sl_species", "Species",
-                                        unique(c("CBHS", "DBHS", "MTGT", "MULD", "PRGN", "RBHS", "RMEL"))
+                                        unique(c("CBHS", "DBHS", "MTGT", "MULD", "PRGN", "RBHS", "RMEL", "BLBR", "MTLI"))
                                         ),
                             selectInput("sl_mgmtarea", "Management Area",
-                                        choices = 1:29, selected = 19),
+                                        choices = 1:30, selected = 19),
                             hr(),
                             p("The following input will further filter the individuals,
                               dipslayed on the map. To reset the following input click the Reset Input button."),
