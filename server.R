@@ -15,10 +15,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- read_csv("Collars.csv")
-dat_animal <- read_csv("Animals.csv")
-#dat <- read_csv('/home/ubuntu/data/collars.csv')
-#dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
+#dat <- read_csv("Collars.csv", n_max = 10000)
+#dat_animal <- read_csv("Animals.csv")
+dat <- read_csv('/home/ubuntu/data/collars.csv', n_max = 10000)
+dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
 
 shinyServer(function(input, output, session) {
 
@@ -100,6 +100,7 @@ shinyServer(function(input, output, session) {
   
   # CHANGE TAB TO SPATIAL AFTER CLICKING 'USE DATA'
   observeEvent(input$ac_UseData, {
+    # shinyjs::logjs('use data button pushed')
     updateNavbarPage(session, "nav", "Spatial")
   })
 
@@ -107,7 +108,7 @@ shinyServer(function(input, output, session) {
 # PAGE 2 SPATIAL ANALYSIS #
 ###########################
   ## create dataframe of movement parameters for analysis
-  move_df <- eventReactive(input$ac_UseData, {
+  move_df <- eventReactive(input$ac_UpdateMap, {
     df <- xyConv(df_subset())
     move <- df %>%
       group_by(ndowid) %>%
@@ -130,7 +131,7 @@ shinyServer(function(input, output, session) {
   })
 
   ## home range estimation
-  hr_ud <- eventReactive(input$ac_UseData, {
+  hr_ud <- eventReactive(input$ac_UpdateMap, {
     df <- as.data.frame(move_df())
     if (input$sl_HomeRange == 'Minimum Convex Polygon') {
       spdf <- SpatialPointsDataFrame(coordinates(cbind(df$x, df$y)),
@@ -166,11 +167,12 @@ shinyServer(function(input, output, session) {
       ## spdf to geojson, wrapping this in an event reactive
       #hr <- lapply(hr, function(x) geojson_json(x))
     }
+
     return(hr)
   })
 
   ## BASEMAP
-  lfMap <- eventReactive(input$ac_UseData, {
+  lfMap <- eventReactive(input$ac_UpdateMap, {
     hr <- hr_ud()
     if (input$sl_HomeRange == 'Brownian Bridge' | input$sl_HomeRange == 'Kernel Density') {
       hr <- lapply(hr, function(x) geojson_json(x))
@@ -178,16 +180,18 @@ shinyServer(function(input, output, session) {
 
     lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                            options = providerTileOptions(attribution = NA))
-
+    
     if (input$sl_HomeRange == 'Display Points') {
       lflt <- lflt %>% mapPoints(move_df())
     } else {
+      shinyjs::logjs(paste(sep = ' - ', 'homerange', input$sl_HomeRange, dput(hr)))
       lflt <- lflt %>% mapPolygons(hr) %>% mapPoints(move_df())
     }
   })
 
   # MAP OUTPUT
   output$map <- renderLeaflet({
+    shinyjs::logjs(paste(dput(lfMap())))
     lfMap()
   })
 
