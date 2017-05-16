@@ -167,7 +167,7 @@ shinyServer(function(input, output, session) {
       ## spdf to geojson, wrapping this in an event reactive
       #hr <- lapply(hr, function(x) geojson_json(x))
     }
-    # shinyjs::logjs(paste(sep = ' - ', 'homerange', input$sl_HomeRange, dput(hr)))
+
     return(hr)
   })
 
@@ -191,6 +191,7 @@ shinyServer(function(input, output, session) {
 
   # MAP OUTPUT
   output$map <- renderLeaflet({
+    shinyjs::logjs(paste(dput(lfMap())))
     lfMap()
   })
 
