@@ -15,10 +15,10 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- read_csv("Collars.csv", n_max = 10000)
-dat_animal <- read_csv("Animals.csv")
-#dat <- read_csv('/home/ubuntu/data/collars.csv')
-#dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
+#dat <- read_csv("Collars.csv", n_max = 10000)
+#dat_animal <- read_csv("Animals.csv")
+dat <- read_csv('/home/ubuntu/data/collars.csv', n_max = 10000)
+dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
 
 shinyServer(function(input, output, session) {
 
