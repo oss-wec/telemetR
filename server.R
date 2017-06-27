@@ -13,21 +13,22 @@ library(maptools)
 library(shinyjs)
 library(magrittr)
 library(highcharter)
-source("global.R")
+wsource("global.R")
 
-#dat <- read_csv("Collars.csv", n_max = 10000)
-#dat_animal <- read_csv("Animals.csv")
-dat <- read_csv('/home/ubuntu/data/collars.csv', n_max = 10000)
-dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
+# dat <- read_csv("Collars.csv", n_max = 10000)
+dat <- read_csv("Collars.csv")
+dat_animal <- read_csv("Animals.csv")
+#dat <- read_csv('/home/ubuntu/data/collars.csv', n_max = 10000)
+#dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
 
 shinyServer(function(input, output, session) {
 
-################  
+################
 # PAGE 1 LOGIC #
-################    
+################
   ## update selectize input for slz_ndowid
   ndowList <- reactive({
-    l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+    l <- dat_animal %>% filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>%
       dplyr::select(ndowid) %>% extract2(1) %>% unique() %>% sort()
     return(l)
   })
@@ -39,7 +40,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$sl_mgmtarea, {
     updateSelectizeInput(session, 'slz_ndowid', choices = c('', ndowList()), selected = '')
   })
-  
+
   ## subset dat by input: species, mgmt area, id, date
   df_subset <- reactive({
     df <- dat %>% filter(species == input$sl_species & mgmtarea == input$sl_mgmtarea)
@@ -55,16 +56,16 @@ shinyServer(function(input, output, session) {
     }
     return(df)
   })
-  
+
   ## preview map, shows 1 locations per day for selected input
   output$preview <- renderLeaflet({
     CollarMap(df_subset())
   })
-  
+
   ## table below the preview map on page 1
   output$animal.table <- DT::renderDataTable({
-    df <- dat_animal %>% 
-      filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>% 
+    df <- dat_animal %>%
+      filter(spid == input$sl_species & mgmtarea == input$sl_mgmtarea) %>%
       dplyr::select(c(2, 1, 3, 5, 4, 8, 9, 6))
     DT::datatable(df, rownames = FALSE,
                   colnames = c("Species", "NDOW ID", "Sex", "Device ID", "Area",
@@ -97,14 +98,14 @@ shinyServer(function(input, output, session) {
     shinyjs::reset("sl_dates")
     shinyjs::reset("ck_date")
   })
-  
+
   # CHANGE TAB TO SPATIAL AFTER CLICKING 'USE DATA'
   observeEvent(input$ac_UseData, {
     # shinyjs::logjs('use data button pushed')
     updateNavbarPage(session, "nav", "Spatial")
   })
 
-###########################  
+###########################
 # PAGE 2 SPATIAL ANALYSIS #
 ###########################
   ## create dataframe of movement parameters for analysis
@@ -180,7 +181,7 @@ shinyServer(function(input, output, session) {
 
     lflt <- leaflet() %>% addProviderTiles('Esri.WorldTopoMap',
                                            options = providerTileOptions(attribution = NA))
-    
+
     if (input$sl_HomeRange == 'Display Points') {
       lflt <- lflt %>% mapPoints(move_df())
     } else {
@@ -249,10 +250,10 @@ shinyServer(function(input, output, session) {
 
   output$nsdTimeSeries <- highcharter::renderHighchart({
     df <- move_df() %>%
-      mutate(ts = as_date(timestamp)) %>% 
+      mutate(ts = as_date(timestamp)) %>%
       arrange(ndowid, ts) %>%
       group_by(ndowid, ts) %>%
-      slice(1) %>% 
+      slice(1) %>%
       ungroup()
 
     ids <- input$slz_nsdID
@@ -260,7 +261,7 @@ shinyServer(function(input, output, session) {
     for(i in seq_along(ids)) {
       d <- df %>% filter(ndowid == ids[i])
       hc <- hc_add_series_times_values(hc, dates = d$ts, values = d$NSD,
-                                       color = color_pal[i], name = ids[i]) %>% 
+                                       color = color_pal[i], name = ids[i]) %>%
             hc_yAxis(max = 1)
     }
     hc
@@ -268,7 +269,7 @@ shinyServer(function(input, output, session) {
 
 ################
 # PAGE 4, DATA #
-################  
+################
   # DT display
   output$collar.table <- DT::renderDataTable({
     DT::datatable(move_df(), rownames = FALSE,
