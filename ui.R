@@ -9,7 +9,8 @@ shinyUI(tagList(
     tabPanel('Preview', div(class = "pg1",
             fluidRow(column(3, h2('Filter Data'),
                             selectInput("sl_species", "Species",
-                                        unique(c("CBHS", "DBHS", "MTGT", "MULD", "PRGN", "RBHS", "RMEL", "BLBR", "MTLI"))
+                                        c("", "CBHS", "DBHS", "MTGT", "MULD", "PRGN", "RBHS", "RMEL", "BLBR", "MTLI"),
+                                        selected = ""
                                         ),
                             selectInput("sl_mgmtarea", "Management Area",
                                         choices = 1:30, selected = 19),

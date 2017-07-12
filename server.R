@@ -15,13 +15,23 @@ library(magrittr)
 library(highcharter)
 source("global.R")
 
-dat <- read_csv("Collars.csv")
-dat_animal <- read_csv("Animals.csv")
-# dat <- read_csv('/home/ubuntu/data/collars.csv', n_max = 10000)
+## LOCAL DATA
+# dat <- read_csv("Collars.csv")
+# dat_animal <- read_csv("Animals.csv")
+
+## SERVER DATA
 # dat <- read_csv('/home/ubuntu/data/collars.csv')
 # dat_animal <- read_csv('/home/ubuntu/data/animals.csv')
 
+## PUBLIC DATA
+dat <- read_csv('testdata.csv')
+dat_animal <- read_csv('testanimal.csv')
+
+## species vector for dropdown
+species <- dat_animal %>% extract2('spid') %>% unique()
+
 shinyServer(function(input, output, session) {
+  updateSelectInput(session, 'sl_species', choices = species)
 
 ################
 # PAGE 1 LOGIC #
