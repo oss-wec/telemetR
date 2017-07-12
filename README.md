@@ -8,6 +8,8 @@ We have organized all GPS collar location data (~2.6 million records) into a sin
 
 ## Demo & Instructions
 
+![](http://imgur.com/43W2vha)
+
 [View a brief (older version) demo here.](https://drive.google.com/file/d/0B1OupsoLNZvkcExIT2VzcUlySWc/view?usp=sharing)
 
 [Instructions for using the app](https://github.com/ndow-wisr/telemetR/wiki/Instructions)
